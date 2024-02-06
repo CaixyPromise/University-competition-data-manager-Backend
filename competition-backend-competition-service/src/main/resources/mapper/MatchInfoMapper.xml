@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.caixy.competitionservice.mapper.MatchInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.caixy.model.entity.MatchInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="matchName" column="matchName" jdbcType="VARCHAR"/>
+            <result property="matchDesc" column="matchDesc" jdbcType="VARCHAR"/>
+            <result property="matchStatus" column="matchStatus" jdbcType="TINYINT"/>
+            <result property="matchPic" column="matchPic" jdbcType="VARCHAR"/>
+            <result property="matchType" column="matchType" jdbcType="VARCHAR"/>
+            <result property="matchLevel" column="matchLevel" jdbcType="VARCHAR"/>
+            <result property="matchRule" column="matchRule" jdbcType="VARCHAR"/>
+            <result property="matchPermissionRule" column="matchPermissionRule" jdbcType="VARCHAR"/>
+            <result property="matchTags" column="matchTags" jdbcType="VARCHAR"/>
+            <result property="matchAward" column="matchAward" jdbcType="VARCHAR"/>
+            <result property="createdUser" column="createdUser" jdbcType="BIGINT"/>
+            <result property="teamSize" column="teamSize" jdbcType="INTEGER"/>
+            <result property="startTime" column="startTime" jdbcType="TIMESTAMP"/>
+            <result property="endTime" column="endTime" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,matchName,matchDesc,
+        matchStatus,matchPic,matchType,
+        matchLevel,matchRule,matchPermissionRule,
+        matchTags,matchAward,createdUser,
+        teamSize,startTime,endTime,
+        createTime,updateTime,isDelete
+    </sql>
+</mapper>

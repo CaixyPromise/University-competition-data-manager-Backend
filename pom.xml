@@ -15,7 +15,6 @@
         <!--业务服务模块-->
         <module>competition-backend-content-service</module>
         <module>competition-backend-competition-service</module>
-        <module>competition-backend-team-service</module>
         <module>competition-backend-notification-service</module>
         <module>competition-backend-team-service</module>
         <module>competition-backend-registration-service</module>
@@ -48,7 +47,11 @@
             <artifactId>gson</artifactId>
             <version>2.9.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-loadbalancer</artifactId>
+            <version>3.1.5</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -70,11 +73,7 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>2.3.0</version>
-        </dependency>
+
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>

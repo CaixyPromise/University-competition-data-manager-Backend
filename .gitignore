@@ -38,3 +38,5 @@ build/
 /nacos/bin/derby.log
 /nacos/bin/logs/**
 /nacos/logs/
+derby.log
+/logs/

@@ -2,22 +2,19 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.caixy.teamservice.mapper.TeamInfoMapper">
+<mapper namespace="com.caixy.userservice.mapper.MajorInfoMapper">
 
-    <resultMap id="BaseResultMap" type="com.caixy.model.entity.TeamInfo">
+    <resultMap id="BaseResultMap" type="com.caixy.model.entity.MajorInfo">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="raceId" column="raceId" jdbcType="BIGINT"/>
-            <result property="signInfo" column="signInfo" jdbcType="VARCHAR"/>
-            <result property="status" column="status" jdbcType="INTEGER"/>
-            <result property="remark" column="remark" jdbcType="VARCHAR"/>
+            <result property="departId" column="departId" jdbcType="BIGINT"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,raceId,signInfo,
-        status,remark,createTime,
-        updateTime,isDelete
+        id,departId,name,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>

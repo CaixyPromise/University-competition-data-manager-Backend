@@ -1,7 +1,15 @@
+server:
+  address: 0.0.0.0
+  port: 8103
+  servlet:
+    context-path: /api/user
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
 spring:
   application:
     name: competition-backend-user-service
-
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -27,15 +35,7 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
-server:
-  address: 0.0.0.0
-  port: 8102
-  servlet:
-    context-path: /api/user
-    session:
-      cookie:
-        max-age: 2592000
-        path: /api
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false

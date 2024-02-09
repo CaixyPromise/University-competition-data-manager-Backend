@@ -18,7 +18,7 @@ public class MatchInfo implements Serializable {
     /**
      * 比赛ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

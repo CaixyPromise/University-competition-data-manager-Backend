@@ -8,7 +8,6 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
             <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
-            <result property="userOpenId" column="userOpenId" jdbcType="CHAR"/>
             <result property="userEmail" column="userEmail" jdbcType="VARCHAR"/>
             <result property="userPhone" column="userPhone" jdbcType="VARCHAR"/>
             <result property="userDepartment" column="userDepartment" jdbcType="BIGINT"/>
@@ -26,8 +25,8 @@
 
     <sql id="Base_Column_List">
         id,userAccount,userPassword,
-        userOpenId,userEmail,userPhone,
-        userDepartment,userMajor,userName,
+        userEmail,userPhone,userDepartment,
+        userMajor,userName,
         userTags,userAvatar,userProfile,
         userRole,userRoleLevel,createTime,
         updateTime,isDelete

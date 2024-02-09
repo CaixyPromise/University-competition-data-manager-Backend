@@ -4,25 +4,28 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 用户
+ *
  * @TableName user
  */
-@TableName(value ="user")
+@TableName(value = "user")
 @Data
-public class User implements Serializable {
+public class User implements Serializable
+{
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 账号
+     * 账号(用户学/工号)
      */
     private String userAccount;
 
@@ -30,11 +33,6 @@ public class User implements Serializable {
      * 密码
      */
     private String userPassword;
-
-    /**
-     * 用户学/工号
-     */
-    private String userOpenId;
 
     /**
      * 用户邮箱

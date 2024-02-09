@@ -9,7 +9,6 @@ create table if NOT exists user
     id             BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
     userAccount    VARCHAR(256)                          NOT NULL COMMENT '账号',
     userPassword   VARCHAR(512)                          NOT NULL COMMENT '密码',
-    userOpenId     CHAR(24)                              NOT NULL COMMENT '用户学/工号',
     userEmail      VARCHAR(256)                          NULL COMMENT '用户邮箱',
     userPhone      VARCHAR(32)                           NULL COMMENT '手机号',
     userDepartment BIGINT                                NULL COMMENT '用户部门/院系id(学院)',
@@ -23,7 +22,7 @@ create table if NOT exists user
     createTime     DATETIME    default CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
     updateTime     DATETIME    default CURRENT_TIMESTAMP NOT NULL on update CURRENT_TIMESTAMP COMMENT '更新时间',
     isDelete       TINYINT     default 0                 NOT NULL COMMENT '是否删除',
-    index idx_userOpenId (userOpenId)
+    index idx_userOpenId (userAccount)
 ) COMMENT '用户' collate = utf8mb4_unicode_ci;
 
 -- 学院信息表

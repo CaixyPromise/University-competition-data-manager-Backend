@@ -3,7 +3,7 @@ package com.caixy.userservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caixy.model.dto.user.UserDepartmentMajorDTO;
+import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
@@ -114,5 +114,5 @@ public interface UserService extends IService<User>
 
     Long makeRegister(User user);
 
-    Page<UserDepartmentMajorDTO> listUserWithDepartmentMajor(long current, long size);
+    Page<UserDepartmentMajorVO> listUserWithDepartmentMajor(long current, long size);
 }

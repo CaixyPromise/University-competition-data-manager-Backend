@@ -7,15 +7,15 @@
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.DepartmentInfo">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="name" column="name" jdbcType="VARCHAR"/>
-        <result property="addUserId" column="addUserId" jdbcType="BIGINT"/>
-
+        <result property="createUserId" column="createUserId" jdbcType="BIGINT"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,name,createTime,
+        id,name,createTime,createUserId,
         updateTime,isDelete
     </sql>
+
 </mapper>

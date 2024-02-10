@@ -3,7 +3,7 @@ package com.caixy.userservice.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caixy.common.constant.CommonConstant;
-import com.caixy.model.dto.user.UserDepartmentMajorDTO;
+import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.enums.UserRoleEnum;
 import org.apache.commons.lang3.StringUtils;
@@ -277,9 +277,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public Page<UserDepartmentMajorDTO> listUserWithDepartmentMajor(long current, long size)
+    public Page<UserDepartmentMajorVO> listUserWithDepartmentMajor(long current, long size)
     {
-        return this.baseMapper.listUserDetails(new Page<>(current, size));
+        return this.baseMapper.listUserDetailsByPage(new Page<>(current, size));
     }
 
     // 私有方法，用于检查账户是否重复

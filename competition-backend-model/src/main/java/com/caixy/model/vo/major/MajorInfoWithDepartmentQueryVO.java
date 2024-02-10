@@ -1,21 +1,30 @@
-package com.caixy.model.dto.department;
+package com.caixy.model.vo.major;
 
-import com.caixy.common.common.PageRequest;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 学院信息分页请求体
+ * 专业关联学院信息vo
  *
- * @name: com.caixy.model.dto.department.DepartmentInfoQueryRequest
+ * @name: com.caixy.model.vo.major.MajorInfoWithDepartmentQueryVO
  * @author: CAIXYPROMISE
- * @since: 2024-02-10 02:00
+ * @since: 2024-02-11 01:27
  **/
-public class DepartmentInfoQueryRequest extends PageRequest implements Serializable
+@Data
+public class MajorInfoWithDepartmentQueryVO implements Serializable
 {
     /**
      * 学院id
+     */
+    private String departmentId;
+    /**
+     * 学院名称
+     */
+    private String departmentName;
+    /**
+     * 专业id
      */
     private Long id;
     /**
@@ -36,5 +45,6 @@ public class DepartmentInfoQueryRequest extends PageRequest implements Serializa
      * 更新时间
      */
     private Date updateTime;
+
     private static final long serialVersionUID = 1L;
 }

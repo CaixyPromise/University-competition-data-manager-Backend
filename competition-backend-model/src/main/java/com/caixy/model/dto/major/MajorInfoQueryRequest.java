@@ -1,4 +1,4 @@
-package com.caixy.model.dto.department;
+package com.caixy.model.dto.major;
 
 import com.caixy.common.common.PageRequest;
 
@@ -12,12 +12,20 @@ import java.util.Date;
  * @author: CAIXYPROMISE
  * @since: 2024-02-10 02:00
  **/
-public class DepartmentInfoQueryRequest extends PageRequest implements Serializable
+public class MajorInfoQueryRequest extends PageRequest implements Serializable
 {
     /**
      * 学院id
      */
-    private Long id;
+    private String departmentId;
+    /**
+     * 学院名称
+     */
+    private String departmentName;
+    /**
+     * 专业id
+     */
+    private String majorId;
     /**
      * 学院名称
      */
@@ -36,5 +44,6 @@ public class DepartmentInfoQueryRequest extends PageRequest implements Serializa
      * 更新时间
      */
     private Date updateTime;
+
     private static final long serialVersionUID = 1L;
 }

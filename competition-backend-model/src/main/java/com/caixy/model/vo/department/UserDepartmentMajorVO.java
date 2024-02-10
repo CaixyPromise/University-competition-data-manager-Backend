@@ -1,4 +1,4 @@
-package com.caixy.model.dto.user;
+package com.caixy.model.vo.department;
 
 import lombok.Data;
 
@@ -8,12 +8,12 @@ import java.time.LocalDateTime;
 /**
  * 用于在查询用户时同时查询该用户的学院+专业的数据传输对象
  *
- * @name: com.caixy.model.dto.user.UserDepartmentMajorDTO
+ * @name: com.caixy.model.vo.department.UserDepartmentMajorVO
  * @author: CAIXYPROMISE
  * @since: 2024-02-10 01:10
  **/
 @Data
-public class UserDepartmentMajorDTO implements Serializable
+public class UserDepartmentMajorVO implements Serializable
 {
     private Long id;
     private String userAccount;

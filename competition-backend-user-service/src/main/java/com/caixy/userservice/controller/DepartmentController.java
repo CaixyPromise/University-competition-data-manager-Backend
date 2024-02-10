@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 /**
  * 学院信息接口控制器
@@ -43,6 +42,16 @@ public class DepartmentController
 
     @Resource
     private UserService userService;
+
+    /**
+     * 获取学院信息列表
+     *
+     * @author CAIXYPROMISE
+     * @since 2024/2/11 01:08
+     * @version 1.0
+     */
+
+
 
     // region 增删改查
 
@@ -64,8 +73,12 @@ public class DepartmentController
         BeanUtils.copyProperties(postAddRequest, post);
 
         User loginUser = userService.getLoginUser(request);
-        post.setAddUserId(loginUser.getId());
-
+        post.setCreateUserId(loginUser.getId());
+        boolean isExist = departmentInfoService.departmentExistByName(post.getName());
+        if (isExist)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "学院已存在");
+        }
         boolean result = departmentInfoService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newDepartmentInfoId = post.getId();
@@ -92,7 +105,7 @@ public class DepartmentController
         DepartmentInfo oldDepartmentInfo = departmentInfoService.getById(id);
         ThrowUtils.throwIf(oldDepartmentInfo == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可删除
-        if (!oldDepartmentInfo.getAddUserId().equals(user.getId()) && !userService.isAdmin(request))
+        if (!oldDepartmentInfo.getCreateUserId().equals(user.getId()) && !userService.isAdmin(request))
         {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }

@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * 用户详细信息分页请求体
@@ -14,8 +15,7 @@ import java.time.LocalDateTime;
  * @author: CAIXYPROMISE
  * @since: 2024-02-10 01:26
  **/
-@EqualsAndHashCode(callSuper = true)
-@Data
+
 public class UserDetailsQueryRequest extends PageRequest implements Serializable
 {
     private Long id;
@@ -28,8 +28,8 @@ public class UserDetailsQueryRequest extends PageRequest implements Serializable
     //    private String userProfile;
     private String userRole;
     //    private Integer userRoleLevel;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private Date createTime;
+    private Date updateTime;
     private String departmentName; // 学院名称
     private String majorName;      // 专业名称
 

@@ -1,4 +1,4 @@
-package com.caixy.model.dto.department;
+package com.caixy.model.dto.major;
 
 import lombok.Data;
 
@@ -8,15 +8,18 @@ import java.io.Serializable;
  * 用户更新请求
  */
 @Data
-public class DepartmentInfoUpdateRequest implements Serializable
+public class MajorInfoUpdateRequest implements Serializable
 {
     /**
-     * id
+     * 专业id
      */
     private Long id;
-
     /**
-     * 学院名称
+     * 学院id
+     */
+    private Long departId;
+    /**
+     * 专业名称
      */
     private String name;
 

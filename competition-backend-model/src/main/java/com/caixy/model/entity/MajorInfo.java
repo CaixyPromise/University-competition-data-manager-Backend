@@ -30,7 +30,10 @@ public class MajorInfo implements Serializable {
      * 学院名称
      */
     private String name;
-
+    /**
+     * 添加人id
+     * */
+    private Long createUserId;
     /**
      * 创建时间
      */

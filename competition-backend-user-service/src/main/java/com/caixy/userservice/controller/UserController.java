@@ -12,6 +12,7 @@ import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
+import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.vo.user.LoginUserVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.userservice.service.UserService;
@@ -237,7 +238,7 @@ public class UserController
     }
 
     /**
-     * 分页获取用户信息, 返回数据如下: {@link UserDepartmentMajorDTO}
+     * 分页获取用户信息, 返回数据如下: {@link UserDepartmentMajorVO}
      *
      * @author CAIXYPROMISE
      * @since 2024/2/10 01:23
@@ -245,14 +246,14 @@ public class UserController
      */
     @PostMapping("/list/page/all")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<UserDepartmentMajorDTO>> listUserDetailsByPage(@RequestBody
+    public BaseResponse<Page<UserDepartmentMajorVO>> listUserDetailsByPage(@RequestBody
                                                                            UserDetailsQueryRequest userDetailsQueryRequest,
                                                                            HttpServletRequest request)
     {
         long current = userDetailsQueryRequest.getCurrent();
         long size = userDetailsQueryRequest.getPageSize();
         // 创建Page对象
-        Page<UserDepartmentMajorDTO> listResult = userService.listUserWithDepartmentMajor(current, size);
+        Page<UserDepartmentMajorVO> listResult = userService.listUserWithDepartmentMajor(current, size);
         return ResultUtils.success(listResult);
     }
 

@@ -5,16 +5,58 @@
 <mapper namespace="com.caixy.userservice.mapper.MajorInfoMapper">
 
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.MajorInfo">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="departId" column="departId" jdbcType="BIGINT"/>
-            <result property="name" column="name" jdbcType="VARCHAR"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="departId" column="departId" jdbcType="BIGINT"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="createUserId" column="createUserId" jdbcType="BIGINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,departId,name,
+        id,departId,name,createUserId,
         createTime,updateTime,isDelete
     </sql>
+
+    <sql id="Base_Major_query">
+        SELECT m.id,
+               m.departId,
+               m.name,
+               m.createUserId,
+               m.createTime,
+               m.updateTime,
+               d.id   AS departmentId,
+               d.name AS departmentName
+        FROM major_info m
+                 LEFT JOIN
+             department_info d ON m.departId = d.id
+        WHERE m.isDelete = 0
+    </sql>
+
+    <select id="getMajorWithDepartment" resultType="com.caixy.model.vo.major.MajorInfoWithDepartmentQueryVO">
+        <include refid="Base_Major_query" />
+    </select>
+    <select id="listMajorWithDepartmentByPage" resultType="com.caixy.model.vo.major.MajorInfoWithDepartmentQueryVO">
+        <include refid="Base_Major_query" />
+    </select>
+
+
+    <select id="getMajorWithDepartmentById" resultType="com.caixy.model.vo.major.MajorWithDepartmentVO">
+        SELECT
+            m.id,
+            m.departId,
+            m.name,
+            m.createTime,
+            m.updateTime,
+            d.id AS departmentId,
+            d.name AS departmentName
+        FROM
+            major_info m
+                LEFT JOIN
+            department_info d ON m.departId = d.id
+        WHERE
+            m.isDelete = 0 AND m.id = #{id}
+    </select>
+
 </mapper>

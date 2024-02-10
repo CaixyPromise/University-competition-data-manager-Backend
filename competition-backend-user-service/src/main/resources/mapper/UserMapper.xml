@@ -5,26 +5,27 @@
 <mapper namespace="com.caixy.userservice.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.User">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
-            <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
-            <result property="userEmail" column="userEmail" jdbcType="VARCHAR"/>
-            <result property="userPhone" column="userPhone" jdbcType="VARCHAR"/>
-            <result property="userDepartment" column="userDepartment" jdbcType="BIGINT"/>
-            <result property="userMajor" column="userMajor" jdbcType="BIGINT"/>
-            <result property="userName" column="userName" jdbcType="VARCHAR"/>
-            <result property="userTags" column="userTags" jdbcType="VARCHAR"/>
-            <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
-            <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
-            <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
-            <result property="userRoleLevel" column="userRoleLevel" jdbcType="INTEGER"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
+        <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
+        <result property="userEmail" column="userEmail" jdbcType="VARCHAR"/>
+        <result property="userPhone" column="userPhone" jdbcType="VARCHAR"/>
+        <result property="userDepartment" column="userDepartment" jdbcType="BIGINT"/>
+        <result property="userMajor" column="userMajor" jdbcType="BIGINT"/>
+        <result property="userName" column="userName" jdbcType="VARCHAR"/>
+        <result property="userTags" column="userTags" jdbcType="VARCHAR"/>
+        <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
+        <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
+        <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
+        <result property="userRoleLevel" column="userRoleLevel" jdbcType="INTEGER"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,userAccount,userPassword,
+        id
+        ,userAccount,userPassword,
         userEmail,userPhone,userDepartment,
         userMajor,userName,
         userTags,userAvatar,userProfile,
@@ -32,17 +33,14 @@
         updateTime,isDelete
     </sql>
 
-    <select id="listUserWithDepartmentMajor" resultType="com.caixy.model.dto.user.UserDepartmentMajorDTO">
+    <sql id="Base_User_Query">
         SELECT u.id,
                u.userAccount,
                u.userEmail,
                u.userPhone,
                u.userName,
---                u.userTags,
                u.userAvatar,
---                u.userProfile,
                u.userRole,
---                u.userRoleLevel,
                u.createTime,
                u.updateTime,
                d.name AS departmentName,
@@ -51,9 +49,14 @@
                  LEFT JOIN department_info d ON u.userDepartment = d.id
                  LEFT JOIN major_info m ON u.userMajor = m.id
         WHERE u.isDelete = 0
-    </select>
-    <select id="listUserDetails" resultType="com.caixy.model.dto.user.UserDepartmentMajorDTO">
+    </sql>
 
+
+    <select id="getUserWithDepartmentMajor" resultType="com.caixy.model.vo.department.UserDepartmentMajorVO">
+        <include refid="Base_User_Query" />
     </select>
 
+    <select id="listUserDetailsByPage" resultType="com.caixy.model.vo.department.UserDepartmentMajorVO">
+        <include refid="Base_User_Query" />
+    </select>
 </mapper>

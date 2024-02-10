@@ -28,7 +28,7 @@ public class DepartmentInfo implements Serializable {
     /**
      * 添加人id
      * */
-    private Long addUserId;
+    private Long createUserId;
 
     /**
      * 创建时间

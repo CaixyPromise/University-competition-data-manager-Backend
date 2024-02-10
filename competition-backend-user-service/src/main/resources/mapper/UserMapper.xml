@@ -31,4 +31,29 @@
         userRole,userRoleLevel,createTime,
         updateTime,isDelete
     </sql>
+
+    <select id="listUserWithDepartmentMajor" resultType="com.caixy.model.dto.user.UserDepartmentMajorDTO">
+        SELECT u.id,
+               u.userAccount,
+               u.userEmail,
+               u.userPhone,
+               u.userName,
+--                u.userTags,
+               u.userAvatar,
+--                u.userProfile,
+               u.userRole,
+--                u.userRoleLevel,
+               u.createTime,
+               u.updateTime,
+               d.name AS departmentName,
+               m.name AS majorName
+        FROM user u
+                 LEFT JOIN department_info d ON u.userDepartment = d.id
+                 LEFT JOIN major_info m ON u.userMajor = m.id
+        WHERE u.isDelete = 0
+    </select>
+    <select id="listUserDetails" resultType="com.caixy.model.dto.user.UserDepartmentMajorDTO">
+
+    </select>
+
 </mapper>

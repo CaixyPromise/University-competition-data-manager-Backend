@@ -1,18 +1,15 @@
-package com.caixy.model.vo;
+package com.caixy.model.dto.department;
 
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
- * 用户视图（脱敏）
+ * 用户更新请求
  *
- 
  */
 @Data
-public class UserVO implements Serializable {
-
+public class DepartmentInfoUpdateRequest implements Serializable {
     /**
      * id
      */
@@ -29,7 +26,7 @@ public class UserVO implements Serializable {
     private String userAvatar;
 
     /**
-     * 用户简介
+     * 简介
      */
     private String userProfile;
 
@@ -37,11 +34,6 @@ public class UserVO implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
 
     private static final long serialVersionUID = 1L;
 }

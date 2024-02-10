@@ -2,7 +2,6 @@ package com.caixy.userservice.controller;
 
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import com.caixy.common.annotation.AuthCheck;
 import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.DeleteRequest;
@@ -11,20 +10,17 @@ import com.caixy.common.common.ResultUtils;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
-import com.caixy.common.utils.EncryptionUtils;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
-import com.caixy.model.vo.LoginUserVO;
-import com.caixy.model.vo.UserVO;
+import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.UserVO;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -39,6 +35,7 @@ public class UserController
     private UserService userService;
 
     // region 登录相关
+
     /**
      * 用户注册
      *
@@ -48,13 +45,15 @@ public class UserController
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest)
     {
-        if (userRegisterRequest == null) {
+        if (userRegisterRequest == null)
+        {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword))
+        {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
         // 密码和校验密码相同
@@ -99,7 +98,8 @@ public class UserController
     @PostMapping("/logout")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request)
     {
-        if (request == null) {
+        if (request == null)
+        {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean result = userService.userLogout(request);
@@ -141,7 +141,7 @@ public class UserController
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
         // 参数校验
-        String userAccount =  user.getUserAccount();
+        String userAccount = user.getUserAccount();
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount))
         {
@@ -237,24 +237,47 @@ public class UserController
     }
 
     /**
+     * 分页获取用户信息, 返回数据如下: {@link UserDepartmentMajorDTO}
+     *
+     * @author CAIXYPROMISE
+     * @since 2024/2/10 01:23
+     * @version 1.0
+     */
+    @PostMapping("/list/page/all")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Page<UserDepartmentMajorDTO>> listUserDetailsByPage(@RequestBody
+                                                                           UserDetailsQueryRequest userDetailsQueryRequest,
+                                                                           HttpServletRequest request)
+    {
+        long current = userDetailsQueryRequest.getCurrent();
+        long size = userDetailsQueryRequest.getPageSize();
+        // 创建Page对象
+        Page<UserDepartmentMajorDTO> listResult = userService.listUserWithDepartmentMajor(current, size);
+        return ResultUtils.success(listResult);
+    }
+
+    /**
      * 分页获取用户列表（仅管理员）
      *
      * @param userQueryRequest
      * @param request
      * @return
      */
+//    @Deprecated
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<User>> listUserByPage(@RequestBody
-                                                       UserQueryRequest userQueryRequest,
+                                                   UserQueryRequest userQueryRequest,
                                                    HttpServletRequest request)
     {
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
+        List<User> userList = userPage.getRecords();
         return ResultUtils.success(userPage);
     }
+
 
     /**
      * 分页获取用户封装列表
@@ -263,6 +286,7 @@ public class UserController
      * @param request
      * @return
      */
+//    @Deprecated
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody
                                                        UserQueryRequest userQueryRequest,

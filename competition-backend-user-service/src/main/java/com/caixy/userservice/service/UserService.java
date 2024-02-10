@@ -1,12 +1,14 @@
 package com.caixy.userservice.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.model.dto.user.UserDepartmentMajorDTO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
-import com.caixy.model.vo.LoginUserVO;
-import com.caixy.model.vo.UserVO;
+import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -111,4 +113,6 @@ public interface UserService extends IService<User>
     Long makeRegister(String userAccount, String userPassword);
 
     Long makeRegister(User user);
+
+    Page<UserDepartmentMajorDTO> listUserWithDepartmentMajor(long current, long size);
 }

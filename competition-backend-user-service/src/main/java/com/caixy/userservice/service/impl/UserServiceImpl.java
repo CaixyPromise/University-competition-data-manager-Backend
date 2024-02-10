@@ -1,7 +1,9 @@
 package com.caixy.userservice.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caixy.common.constant.CommonConstant;
+import com.caixy.model.dto.user.UserDepartmentMajorDTO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.enums.UserRoleEnum;
 import org.apache.commons.lang3.StringUtils;
@@ -15,8 +17,8 @@ import com.caixy.common.utils.SqlUtils;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
 
-import com.caixy.model.vo.LoginUserVO;
-import com.caixy.model.vo.UserVO;
+import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.UserVO;
 import com.caixy.userservice.mapper.UserMapper;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -272,6 +274,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
             return user.getId();
         }
+    }
+
+    @Override
+    public Page<UserDepartmentMajorDTO> listUserWithDepartmentMajor(long current, long size)
+    {
+        return this.baseMapper.listUserDetails(new Page<>(current, size));
     }
 
     // 私有方法，用于检查账户是否重复

@@ -4,7 +4,7 @@ import com.caixy.common.common.ErrorCode;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.UserRoleEnum;
-import com.caixy.model.vo.UserVO;
+import com.caixy.model.vo.user.UserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

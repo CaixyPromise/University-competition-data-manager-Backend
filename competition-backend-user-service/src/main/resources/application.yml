@@ -25,7 +25,7 @@ spring:
     password: as123456789
   redis:
     database: 1
-    host: localhost
+    host: 192.168.59.226
     port: 6379
     timeout: 5000
   servlet:

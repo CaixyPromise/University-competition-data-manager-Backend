@@ -14,14 +14,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @ComponentScan("com.caixy")
-//@EnableDiscoveryClient
-//@EnableFeignClients(basePackages = {"com.caixy.serviceclient.service"})
+@EnableDiscoveryClient
+@EnableFeignClients(basePackages = {"com.caixy.serviceclient.service"})
 public class CompetitionBackendUserServiceApplication
 {
-
     public static void main(String[] args)
     {
         SpringApplication.run(CompetitionBackendUserServiceApplication.class, args);
     }
-
 }

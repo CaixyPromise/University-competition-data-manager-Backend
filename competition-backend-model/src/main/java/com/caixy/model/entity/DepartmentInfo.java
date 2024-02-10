@@ -25,6 +25,10 @@ public class DepartmentInfo implements Serializable {
      * 学院名称
      */
     private String name;
+    /**
+     * 添加人id
+     * */
+    private Long addUserId;
 
     /**
      * 创建时间

@@ -40,3 +40,4 @@ build/
 /nacos/logs/
 derby.log
 /logs/
+/work

@@ -12,9 +12,12 @@ import com.caixy.common.exception.ThrowUtils;
 import com.caixy.model.dto.department.DepartmentInfoAddRequest;
 import com.caixy.model.dto.department.DepartmentInfoQueryRequest;
 import com.caixy.model.dto.department.DepartmentInfoUpdateRequest;
+import com.caixy.model.dto.department.DepartmentWithMajorsDTO;
 import com.caixy.model.entity.DepartmentInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.department.DepartmentInfoVO;
+import com.caixy.model.vo.department.DepartmentWithMajorsVO;
+import com.caixy.model.vo.major.MajorInfoVO;
 import com.caixy.userservice.service.DepartmentInfoService;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 学院信息接口控制器
@@ -44,13 +49,41 @@ public class DepartmentController
     private UserService userService;
 
     /**
-     * 获取学院信息列表
+     * 获取学院下的专业信息
      *
      * @author CAIXYPROMISE
      * @since 2024/2/11 01:08
      * @version 1.0
      */
-
+    @GetMapping("/get/vo/department-major")
+    public BaseResponse<DepartmentWithMajorsVO> getMajorUnderDepartment(
+            @RequestParam("departmentId") long departmentId)
+    {
+        if (departmentId <= 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不合法");
+        }
+        List<DepartmentWithMajorsDTO> departments =
+                departmentInfoService.getMajorUnderDepartment(departmentId);
+        if (departments.isEmpty())
+        {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "未找到该学院下的专业");
+        }
+        DepartmentWithMajorsVO departmentWithMajorsVO =
+                new DepartmentWithMajorsVO();
+        DepartmentWithMajorsDTO departmentWithMajorsDTO = departments.get(0);
+        departmentWithMajorsVO.setDepartmentId(departmentWithMajorsDTO.getDepartmentId());
+        departmentWithMajorsVO.setDepartmentName(departmentWithMajorsDTO.getDepartmentName());
+        List<DepartmentWithMajorsVO.MajorInnerInfo> majors = departments.stream().map(dept ->
+        {
+            DepartmentWithMajorsVO.MajorInnerInfo majorInfoVO = new DepartmentWithMajorsVO.MajorInnerInfo();
+            majorInfoVO.setMajorId(dept.getMajorId());
+            majorInfoVO.setMajorName(dept.getMajorName());
+            return majorInfoVO;
+        }).collect(Collectors.toList());
+        departmentWithMajorsVO.setMajors(majors);
+        return ResultUtils.success(departmentWithMajorsVO);
+    }
 
 
     // region 增删改查

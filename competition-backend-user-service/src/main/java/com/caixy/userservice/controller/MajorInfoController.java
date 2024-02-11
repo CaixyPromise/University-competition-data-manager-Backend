@@ -149,7 +149,7 @@ public class MajorInfoController
 
 
     /**
-     * 根据 id 获取 vo
+     * 根据 专业 id 获取 专业信息vo
      *
      * @param id
      * @return
@@ -167,7 +167,6 @@ public class MajorInfoController
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         MajorInfoVO majorInfoVO = new MajorInfoVO();
-//        majorInfoVO.setName(post.get());
         BeanUtils.copyProperties(post, majorInfoVO);
         return ResultUtils.success(majorInfoVO);
     }

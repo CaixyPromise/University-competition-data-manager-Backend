@@ -2,10 +2,13 @@ package com.caixy.userservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caixy.model.dto.department.DepartmentWithMajorsDTO;
 import com.caixy.model.entity.DepartmentInfo;
 import com.caixy.userservice.mapper.DepartmentInfoMapper;
 import com.caixy.userservice.service.DepartmentInfoService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
 * @author CAIXYPROMISE
@@ -42,6 +45,12 @@ public class DepartmentInfoServiceImpl extends ServiceImpl<DepartmentInfoMapper,
     {
         return this.count(new LambdaQueryWrapper<DepartmentInfo>()
                 .eq(DepartmentInfo::getId, departmentId)) > 0;
+    }
+
+    @Override
+    public List<DepartmentWithMajorsDTO> getMajorUnderDepartment(Long departmentId)
+    {
+        return this.baseMapper.selectMajorByDepartmentId(departmentId);
     }
 }
 

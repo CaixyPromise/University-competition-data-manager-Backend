@@ -1,6 +1,5 @@
 package com.caixy.model.vo.major;
 
-import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -14,7 +13,21 @@ import java.io.Serializable;
 @Data
 public class MajorInfoVO implements Serializable
 {
+    /**
+     * 专业名称
+     */
     private String name;
+    /**
+     * 学院名称
+     */
     private String departmentName;
+    /**
+     * 专业id
+     */
+    private Long majorId;
+    /**
+     * 学院id
+     */
+    private Long departmentId;
     private static final long serialVersionUID = 1L;
 }

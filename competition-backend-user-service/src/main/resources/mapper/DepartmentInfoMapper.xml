@@ -18,4 +18,15 @@
         updateTime,isDelete
     </sql>
 
+    <select id="selectMajorByDepartmentId" resultType="com.caixy.model.dto.department.DepartmentWithMajorsDTO">
+        SELECT d.id AS departmentId,
+               d.name as departmentName,
+               m.name AS majorName,
+               m.id AS majorId
+        FROM department_info d
+                 LEFT JOIN major_info m on
+            d.id = m.departId
+        WHERE d.id = #{departmentId} AND M.isDelete = 0;
+    </select>
+
 </mapper>

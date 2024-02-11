@@ -1,7 +1,10 @@
 package com.caixy.userservice.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.model.dto.department.DepartmentWithMajorsDTO;
 import com.caixy.model.entity.DepartmentInfo;
+
+import java.util.List;
 
 /**
  * @author CAIXYPROMISE
@@ -10,7 +13,30 @@ import com.caixy.model.entity.DepartmentInfo;
  */
 public interface DepartmentInfoService extends IService<DepartmentInfo>
 {
+    /**
+     * 判断学院是否存在：根据名称：用于新建学院
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/11 13:21
+     */
     boolean departmentExistByName(String departmentName);
 
+    /**
+     * 判断学院是否存在：根据ID：用于更新学院
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/11 13:22
+     */
     boolean departmentExistById(Long departmentId);
+
+    /**
+     * 获取学院下的所有专业信息
+     *
+     * @author CAIXYPROMISE
+     * @since 2024/2/11 13:22
+     * @version 1.0
+     */
+    List<DepartmentWithMajorsDTO> getMajorUnderDepartment(Long departmentId);
 }

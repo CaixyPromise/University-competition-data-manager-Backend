@@ -1,6 +1,8 @@
 package com.caixy.model.dto.department;
 
 import com.caixy.common.common.PageRequest;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -12,6 +14,8 @@ import java.util.Date;
  * @author: CAIXYPROMISE
  * @since: 2024-02-10 02:00
  **/
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class DepartmentInfoQueryRequest extends PageRequest implements Serializable
 {
     /**

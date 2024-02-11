@@ -9,15 +9,16 @@ import com.caixy.userservice.service.DepartmentInfoService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
-* @author CAIXYPROMISE
-* @description 针对表【department_info(学院信息表)】的数据库操作Service实现
-* @createDate 2024-02-06 23:22:54
-*/
+ * @author CAIXYPROMISE
+ * @description 针对表【department_info(学院信息表)】的数据库操作Service实现
+ * @createDate 2024-02-06 23:22:54
+ */
 @Service
 public class DepartmentInfoServiceImpl extends ServiceImpl<DepartmentInfoMapper, DepartmentInfo>
-    implements DepartmentInfoService
+        implements DepartmentInfoService
 {
     /**
      * 根据学院名称判断该学院是否存在：用于学院创建
@@ -51,6 +52,12 @@ public class DepartmentInfoServiceImpl extends ServiceImpl<DepartmentInfoMapper,
     public List<DepartmentWithMajorsDTO> getMajorUnderDepartment(Long departmentId)
     {
         return this.baseMapper.selectMajorByDepartmentId(departmentId);
+    }
+
+    @Override
+    public List<Map<String, Object>> validateDepartmentsAndMajors(List<Long> departmentIds, List<Long> majorIds)
+    {
+        return this.baseMapper.validateDepartmentsAndMajors(departmentIds, majorIds);
     }
 }
 

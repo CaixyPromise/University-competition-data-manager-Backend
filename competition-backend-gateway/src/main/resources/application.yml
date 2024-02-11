@@ -9,6 +9,10 @@ spring:
           uri: lb://competition-backend-user-service
           predicates:
             - Path=/api/user/**
+        - id: competition-backend-competition-service
+          uri: lb://competition-backend-competition-service
+          predicates:
+            - Path=/api/competition/**
   application:
     name: competition-backend-gateway
   main:

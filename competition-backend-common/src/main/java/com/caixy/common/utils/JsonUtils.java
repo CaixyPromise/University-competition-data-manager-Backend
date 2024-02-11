@@ -57,4 +57,14 @@ public class JsonUtils
         return gson.fromJson(json, typeOfT);
     }
 
+    public static <T> T jsonToObject(String json, Class<T> targetType)
+    {
+        return gson.fromJson(json, targetType);
+    }
+
+    public static <T> T jsonToObject(String json, Type typeOfT)
+    {
+        return gson.fromJson(json, typeOfT);
+    }
+
 }

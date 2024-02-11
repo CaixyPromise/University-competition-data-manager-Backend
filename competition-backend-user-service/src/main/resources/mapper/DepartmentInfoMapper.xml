@@ -29,4 +29,29 @@
         WHERE d.id = #{departmentId} AND M.isDelete = 0;
     </select>
 
+    <select id="validateDepartmentsAndMajors" resultType="java.util.Map">
+        SELECT
+            d.id AS departmentId,
+            m.id AS majorId
+        FROM
+            department_info d
+        LEFT JOIN
+            major_info m ON d.id = m.departId
+        WHERE
+            d.id IN
+            <foreach item="departmentId" collection="departmentIds" open="(" separator="," close=")">
+                #{departmentId}
+            </foreach>
+        AND
+            m.id
+                IN
+            <foreach item="majorId" collection="majorIds" open="(" separator="," close=")">
+                #{majorId}
+            </foreach>
+        AND
+            d.isDelete = 0
+        AND
+            m.isDelete = 0
+    </select>
+
 </mapper>

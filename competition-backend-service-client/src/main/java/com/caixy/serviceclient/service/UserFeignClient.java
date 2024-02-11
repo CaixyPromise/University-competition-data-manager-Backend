@@ -1,20 +1,23 @@
 package com.caixy.serviceclient.service;
 
 import com.caixy.common.common.ErrorCode;
+import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
+import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.user.UserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
-
-import com.caixy.common.constant.UserConstant;
+import java.util.Map;
 
 /**
  * 用户接口远程调用类
@@ -26,6 +29,18 @@ import com.caixy.common.constant.UserConstant;
 @FeignClient(name = "competition-backend-user-service", path = "/api/user/inner")
 public interface UserFeignClient
 {
+
+    /**
+     * 批量查询学院与专业的是否合法
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/12 00:54
+     */
+    @PostMapping("/validate/departments-and-majors")
+    DepartAndMajorValidationResponse validateDepartmentsAndMajors(
+            @RequestBody Map<Long, List<Long>> permissions);
+
 
     /**
      * 根据 id 获取用户

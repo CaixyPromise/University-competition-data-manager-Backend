@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `match_info`
     id                  BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY COMMENT '比赛ID',
     matchName           VARCHAR(80)                        NOT NULL COMMENT '比赛名称',
     matchDesc           TEXT                               NOT NULL COMMENT '比赛描述',
-    matchStatus         TINYINT                            NOT NULL COMMENT '比赛状态',
+    matchStatus         TINYINT                            NOT NULL COMMENT '比赛状态: 0-报名中; 1-已开始; 2-已结束;',
     matchPic            VARCHAR(1024)                      NOT NULL COMMENT '比赛宣传图片(logo)',
     matchType           VARCHAR(20)                        NOT NULL COMMENT '比赛类型: A类, B类, C类',
     matchLevel          VARCHAR(20)                        NOT NULL COMMENT '比赛等级: 国家级, 省级',

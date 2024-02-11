@@ -5,6 +5,7 @@ import com.caixy.model.dto.department.DepartmentWithMajorsDTO;
 import com.caixy.model.entity.DepartmentInfo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author CAIXYPROMISE
@@ -35,8 +36,17 @@ public interface DepartmentInfoService extends IService<DepartmentInfo>
      * 获取学院下的所有专业信息
      *
      * @author CAIXYPROMISE
-     * @since 2024/2/11 13:22
      * @version 1.0
+     * @since 2024/2/11 13:22
      */
     List<DepartmentWithMajorsDTO> getMajorUnderDepartment(Long departmentId);
+
+    /**
+     * 批量验证学院和专业是否存在
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/12 01:04
+     */
+    List<Map<String, Object>> validateDepartmentsAndMajors(List<Long> departmentIds, List<Long> majorIds);
 }

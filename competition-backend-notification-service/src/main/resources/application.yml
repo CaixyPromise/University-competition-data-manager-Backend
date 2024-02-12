@@ -1,3 +1,24 @@
 # 应用服务 WEB 访问端口
-server.port=8080
+server:
+  port: 8108
 
+spring:
+
+  # 邮箱服务
+  mail:
+    host: smtp.163.com
+    username: you_email@example.com
+    password: YOUR_PASSWORD
+    defaultEncoding: UTF-8
+    port: 465
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            enable: true
+          stattls:
+            require: true

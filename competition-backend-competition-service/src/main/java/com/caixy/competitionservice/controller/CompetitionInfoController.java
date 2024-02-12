@@ -14,11 +14,13 @@ import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.dto.match.MatchInfoAddRequest;
 import com.caixy.model.dto.match.MatchInfoQueryRequest;
+import com.caixy.model.dto.match.MatchInfoUpdateRequest;
 import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.match.MatchInfoQueryVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,6 +52,11 @@ public class CompetitionInfoController
     @Resource
     private UserFeignClient userService;
 
+    private static final int COPY_PROPERTIES_ADD = 1;
+
+    private static final int COPY_PROPERTIES_UPDATE = 2;
+
+
     // region 增删改查
 
     /**
@@ -69,71 +76,36 @@ public class CompetitionInfoController
         }
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
-        MatchInfo post = new MatchInfo();
-
-        // 设置比赛信息
-        post.setMatchName(postAddRequest.getMatchName());
-        post.setMatchDesc(postAddRequest.getMatchDesc());
-        post.setMatchStatus(postAddRequest.getMatchStatus());
-        post.setMatchPic(postAddRequest.getMatchPic());
-        post.setMatchType(postAddRequest.getMatchType());
-        post.setMatchLevel(postAddRequest.getMatchLevel());
-        post.setMatchRule(postAddRequest.getMatchRule());
-
-        // 获取登录用户
-        post.setCreatedUser(loginUser.getId());
-
-        post.setTeamSize(postAddRequest.getTeamSize());
-        post.setStartTime(postAddRequest.getStartTime());
-        post.setEndTime(postAddRequest.getEndTime());
-
-        // 检查并提取校验学院与专业的数据
-        Map<Long, List<Long>> permissions = postAddRequest.getMatchPermissionRule() != null ?
-                                            postAddRequest.getMatchPermissionRule().getPermissions() : null;
-        if (permissions == null || permissions.isEmpty())
-        {
-            permissions = new HashMap<Long, List<Long>>()
-            {{
-                put(-1L, Collections.singletonList(-1L));
-            }};
-        }
-        else
-        {
-            // 执行校验
-            DepartAndMajorValidationResponse validated = userService.validateDepartmentsAndMajors(permissions);
-            if (!validated.getIsValid())
-            {
-                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "学院ID或专业ID无效或不匹配");
-            }
-        }
-
-        // 处理JSON格式的字段
-        try
-        {
-            if (postAddRequest.getMatchAward() == null ||
-                postAddRequest.getMatchTags() == null)
-            {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR, "参数不能为空");
-            }
-            String matchPermissionRuleJson =
-                    JsonUtils.objectToString(permissions);
-            post.setMatchPermissionRule(matchPermissionRuleJson);
-
-            String matchTagsJson = JsonUtils.objectToString(postAddRequest.getMatchTags());
-            post.setMatchTags(matchTagsJson);
-
-            String matchAwardJson = JsonUtils.objectToString(postAddRequest.getMatchAward());
-            post.setMatchAward(matchAwardJson);
-        }
-        catch (Exception e)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
-        }
+        MatchInfo post = copyProperties(postAddRequest, loginUser.getId(), COPY_PROPERTIES_ADD);
 
         boolean result = matchInfoService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newMatchInfoId = post.getId();
         return ResultUtils.success(newMatchInfoId);
+    }
+
+    /**
+     * 更新（仅管理员）
+     *
+     * @param postUpdateRequest
+     * @return
+     */
+    @PostMapping("/update")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> updateMatchInfo(@RequestBody MatchInfoUpdateRequest postUpdateRequest)
+    {
+        if (postUpdateRequest == null || postUpdateRequest.getId() <= 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+//        MatchInfo post = new MatchInfo();
+        MatchInfo post = copyProperties(postUpdateRequest, null, COPY_PROPERTIES_UPDATE);
+        long id = postUpdateRequest.getId();
+        // 判断是否存在
+        MatchInfo oldMatchInfo = matchInfoService.getById(id);
+        ThrowUtils.throwIf(oldMatchInfo == null, ErrorCode.NOT_FOUND_ERROR);
+        boolean result = matchInfoService.updateById(post);
+        return ResultUtils.success(result);
     }
 
     /**
@@ -164,31 +136,7 @@ public class CompetitionInfoController
         return ResultUtils.success(b);
     }
 
-//    /**
-//     * 更新（仅管理员）
-//     *
-//     * @param postUpdateRequest
-//     * @return
-//     */
-//    @PostMapping("/update")
-//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-//    public BaseResponse<Boolean> updateMatchInfo(@RequestBody MatchInfoUpdateRequest postUpdateRequest)
-//    {
-//        if (postUpdateRequest == null || postUpdateRequest.getId() <= 0)
-//        {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-//        }
-//        MatchInfo post = new MatchInfo();
-//        BeanUtils.copyProperties(postUpdateRequest, post);
-//        long id = postUpdateRequest.getId();
-//        // 判断是否存在
-//        MatchInfo oldMatchInfo = majorInfoService.getById(id);
-//        ThrowUtils.throwIf(oldMatchInfo == null, ErrorCode.NOT_FOUND_ERROR);
-//        boolean result = majorInfoService.updateById(post);
-//        return ResultUtils.success(result);
-//    }
-//
-//
+
     /**
      * 分页获取列表（仅管理员）
      *
@@ -211,4 +159,89 @@ public class CompetitionInfoController
     }
 
     // endregion
+
+
+    // 使用泛型和反射优化属性复制方法
+    private <T> MatchInfo copyProperties(T sourceItem, Long loginUserId, int type)
+    {
+        MatchInfo post = new MatchInfo();
+        BeanUtils.copyProperties(sourceItem, post);
+
+        // 通用处理，根据类型设置创建用户和处理JSON字段
+        if (type == COPY_PROPERTIES_ADD && loginUserId != null)
+        {
+            post.setCreatedUser(loginUserId);
+        }
+
+        // 提取和验证权限规则
+        Map<Long, List<Long>> permissions;
+        if (sourceItem instanceof MatchInfoAddRequest)
+        {
+            permissions = ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule() != null ?
+                          ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule().getPermissions() : null;
+        }
+        else
+        {
+            permissions = ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule() != null ?
+                          ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule().getPermissions() : null;
+        }
+        validateAndProcessPermissions(permissions);
+
+        // 处理JSON格式的字段
+        processJsonFields(sourceItem, post);
+
+        return post;
+    }
+
+    private void validateAndProcessPermissions(Map<Long, List<Long>> permissions)
+    {
+        if (permissions == null || permissions.isEmpty())
+        {
+            permissions = new HashMap<Long, List<Long>>()
+            {{
+                put(-1L, Collections.singletonList(-1L));
+            }};
+        }
+        else
+        {
+            // 执行校验
+            DepartAndMajorValidationResponse validated = userService.validateDepartmentsAndMajors(permissions);
+            if (!validated.getIsValid())
+            {
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "学院ID或专业ID无效或不匹配");
+            }
+        }
+    }
+
+    private void processJsonFields(Object sourceItem, MatchInfo post)
+    {
+        try
+        {
+            Map<Long, List<Long>> permissions = new HashMap<>();
+            if (sourceItem instanceof MatchInfoAddRequest)
+            {
+                permissions = ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule().getPermissions();
+            }
+            else if (sourceItem instanceof MatchInfoUpdateRequest)
+            {
+                permissions = ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule().getPermissions();
+            }
+            String matchPermissionRuleJson = JsonUtils.objectToString(permissions);
+            post.setMatchPermissionRule(matchPermissionRuleJson);
+
+            String matchTagsJson = JsonUtils.objectToString(sourceItem instanceof MatchInfoAddRequest ?
+                                                            ((MatchInfoAddRequest) sourceItem).getMatchTags() :
+                                                            ((MatchInfoUpdateRequest) sourceItem).getMatchTags());
+            post.setMatchTags(matchTagsJson);
+
+            String matchAwardJson = JsonUtils.objectToString(sourceItem instanceof MatchInfoAddRequest ?
+                                                             ((MatchInfoAddRequest) sourceItem).getMatchAward() :
+                                                             ((MatchInfoUpdateRequest) sourceItem).getMatchAward());
+            post.setMatchAward(matchAwardJson);
+        }
+        catch (Exception e)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        }
+    }
 }

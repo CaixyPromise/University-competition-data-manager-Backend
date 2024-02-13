@@ -56,6 +56,10 @@ public class CompetitionInfoController
 
     private static final int COPY_PROPERTIES_UPDATE = 2;
 
+    private static final int TYPE_LENGTH = 20;
+
+    private static final int LEVEL_LENGTH = 20;
+
 
     // region 增删改查
 
@@ -220,10 +224,31 @@ public class CompetitionInfoController
             Map<Long, List<Long>> permissions = new HashMap<>();
             if (sourceItem instanceof MatchInfoAddRequest)
             {
+                int levelLength = ((MatchInfoAddRequest) sourceItem).getMatchLevel().length();
+                if (levelLength > 20)
+                {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛级别长度不能超过20");
+                }
+                int typeLength = ((MatchInfoAddRequest) sourceItem).getMatchType().length();
+                if (typeLength > 20)
+                {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛类型长度不能超过20");
+                }
+
                 permissions = ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule().getPermissions();
             }
             else if (sourceItem instanceof MatchInfoUpdateRequest)
             {
+                int levelLength = ((MatchInfoUpdateRequest) sourceItem).getMatchLevel().length();
+                if (levelLength > LEVEL_LENGTH)
+                {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛级别长度不能超过20");
+                }
+                int typeLength = ((MatchInfoUpdateRequest) sourceItem).getMatchType().length();
+                if (typeLength > TYPE_LENGTH)
+                {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛类型长度不能超过20");
+                }
                 permissions = ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule().getPermissions();
             }
             String matchPermissionRuleJson = JsonUtils.objectToString(permissions);

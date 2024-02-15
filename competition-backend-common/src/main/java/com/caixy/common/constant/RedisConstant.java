@@ -9,6 +9,16 @@ package com.caixy.common.constant;
 public interface RedisConstant
 {
     /**
+     * 学院+专业数据预热加载key
+     */
+    String ACADEMY_MAJOR_KEY = "ACADEMY_MAJOR:";
+    /**
+     * 学院+专业数据预热加载过期时间：1天
+     */
+    Long ACADEMY_MAJOR_EXPIRE = (60L * 60L * 24L);
+
+
+    /**
      * 随机数的redis key
      */
     String NONCE_KEY = "nonce:";

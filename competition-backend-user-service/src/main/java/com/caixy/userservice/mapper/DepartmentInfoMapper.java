@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public interface DepartmentInfoMapper extends BaseMapper<DepartmentInfo>
 {
-    List<DepartmentWithMajorsDTO > selectMajorByDepartmentId(@Param("departmentId") Long departmentId);
+    List<DepartmentWithMajorsDTO> selectMajorByDepartmentId(@Param("departmentId") Long departmentId);
     /**
      * 校验指定的学院ID和专业ID是否存在且对应关系正确。
      *
@@ -28,6 +28,10 @@ public interface DepartmentInfoMapper extends BaseMapper<DepartmentInfo>
             @Param("departmentIds") List<Long> departmentIds,
             @Param("majorIds") List<Long> majorIds
     );
+
+
+
+
 }
 
 

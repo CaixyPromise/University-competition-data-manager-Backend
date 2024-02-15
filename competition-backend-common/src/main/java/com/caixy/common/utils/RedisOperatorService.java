@@ -2,9 +2,10 @@ package com.caixy.common.utils;
 
 import com.caixy.common.constant.RedisConstant;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +20,9 @@ import java.util.concurrent.TimeUnit;
  * @author: CAIXYPROMISE
  * @since: 2023-12-20 20:14
  **/
-@Service
+@Component
 @AllArgsConstructor
+@Slf4j
 public class RedisOperatorService
 {
     private final StringRedisTemplate stringRedisTemplate;
@@ -92,6 +94,7 @@ public class RedisOperatorService
         {
             refreshExpire(key, expire);
         }
+        log.info("[setHashMap] key: {}, data: {}, expire: {}", key, data, expire);
     }
 
     public void setStringHashMap(String key, HashMap<String, String> data, Long expire)

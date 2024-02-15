@@ -19,14 +19,21 @@
     </sql>
 
     <select id="selectMajorByDepartmentId" resultType="com.caixy.model.dto.department.DepartmentWithMajorsDTO">
-        SELECT d.id AS departmentId,
+        SELECT d.id   AS departmentId,
                d.name as departmentName,
                m.name AS majorName,
-               m.id AS majorId
-        FROM department_info d
-                 LEFT JOIN major_info m on
-            d.id = m.departId
-        WHERE d.id = #{departmentId} AND M.isDelete = 0;
+               m.id   AS majorId
+        FROM
+            department_info d
+        LEFT JOIN
+            major_info m on d.id = m.departId
+        <where>
+            <if test="departmentId != null">
+                AND d.id = #{departmentId}
+            </if>
+            AND d.isDelete = 0
+            AND m.isDelete = 0
+        </where>
     </select>
 
     <select id="validateDepartmentsAndMajors" resultType="java.util.Map">

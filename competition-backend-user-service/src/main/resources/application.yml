@@ -48,3 +48,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 knife4j:
   enable: true
+
+preload:
+  department-major:
+    enabled: true

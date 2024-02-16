@@ -25,18 +25,93 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisOperatorService
 {
+    // 调用接口排名信息的最大容量
+    private static final Long REDIS_INVOKE_RANK_MAX_SIZE = 10L;
+    // 分布式锁基础定义Key
+    private static final String REDIS_LOCK_KEY = "REDIS_LOCK:";
+
+    // 分布式锁定义过期时间
+    private static final Long REDIS_LOCK_EXPIRE = 5L;
+    // 分布式锁最大重试次数
+    private static final int MAX_RETRY_TIMES = 10;
+    // 分布式锁重试间隔时间（毫秒）
+    private static final Long RETRY_INTERVAL = 100L;
+
+    // 分布式调用统计排行榜插入锁Key
+    private static final String REDIS_INVOKE_RANK_LOCK_KEY = REDIS_LOCK_KEY + "REDIS_INVOKE_RANK_LOCK:";
+
     private final StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * 根据枚举获取Key，并且根据字段值生成完整的Key值，自动拼接冒号
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/16 21:02
+     */
+    private String getFullKey(RedisConstant keyEnum, Object itemName)
+    {
+        // Key值
+        String currentKey = keyEnum.getKey();
+        // 如果itemName是空的，就是单走一条Key作为本体Key值，不需要冒号拼接
+        if (itemName == null)
+        {
+            return currentKey;
+        }
+        //  判断最后一个字符是否是冒号，不是就拼接一个冒号
+        if (currentKey.charAt(currentKey.length() - 1) != ':')
+        {
+            currentKey += ":";
+        }
+        // 判断itemName是否是字符串类型，是就拼接，不是就调用toString方法
+        // 如果是字符串类型，直接拼接
+        if (itemName instanceof String)
+        {
+            return currentKey + itemName;
+        }
+        // 如果是其他类型，直接调用toString方法
+        else
+        {
+            return currentKey + itemName.toString();
+        }
+    }
+
 
     /**
      * 删除Key的数据
      *
      * @author CAIXYPROMISE
      * @version 1.0
-     * @since 2023/12/0 20:19
+     * @since 2023/12/10 20:19
      */
     public boolean delete(String key)
     {
         return Boolean.TRUE.equals(stringRedisTemplate.delete(key));
+    }
+
+
+    /**
+     * 删除Key的数据：接受来自常量的配置
+     *
+     * @author CAIXYPROMISE
+     * @version 2.0
+     * @since 2024/2/16 20:19
+     */
+    public boolean delete(RedisConstant Enum, Object itemName)
+    {
+        return Boolean.TRUE.equals(stringRedisTemplate.delete(getFullKey(Enum, itemName)));
+    }
+
+    /**
+     * 刷新过期时间：接受来自常量的配置
+     *
+     * @author CAIXYPROMISE
+     * @version 2.0
+     * @since 2024/2/16 20:19
+     */
+    public void refreshExpire(RedisConstant Enum, Object itemName, long expire)
+    {
+        stringRedisTemplate.expire(getFullKey(Enum, itemName.toString()), expire, TimeUnit.SECONDS);
     }
 
     /**
@@ -52,6 +127,18 @@ public class RedisOperatorService
     }
 
     /**
+     * 获取字符串数据：接受来自常量的配置
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2023/1220 20:18
+     */
+    public String getString(RedisConstant Enum, Object itemName)
+    {
+        return stringRedisTemplate.opsForValue().get(getFullKey(Enum, itemName));
+    }
+
+    /**
      * 获取字符串数据
      *
      * @author CAIXYPROMISE
@@ -63,6 +150,7 @@ public class RedisOperatorService
         return stringRedisTemplate.opsForValue().get(key);
     }
 
+
     /**
      * 获取哈希数据
      *
@@ -70,15 +158,54 @@ public class RedisOperatorService
      * @version 1.0
      * @since 2023/1220 20:18
      */
-    public Map<Object, Object> getHash(String key, String objectName)
+    public Map<Object, Object> getHash(String key, Object objectName)
     {
         return stringRedisTemplate.opsForHash().entries(key + objectName);
     }
 
+
+    /**
+     * 获取哈希数据：接受来自常量的配置
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2023/1220 20:18
+     */
+    public Map<Object, Object> getHash(RedisConstant Enum, Object objectName)
+    {
+        return stringRedisTemplate.opsForHash().entries(getFullKey(Enum, objectName));
+    }
+
+    /**
+     * 放入hash类型的数据 - Hash<String, Object> 接受来自常量的配置
+     *
+     * @param key    redis-key
+     * @param data   数据
+     * @param expire 过期时间, 单位: 秒
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2023/12/20 2:16
+     */
+    public void setHashMap(RedisConstant Enum, Object itemName, HashMap<String, Object> data)
+    {
+        String fullKey = getFullKey(Enum, itemName);
+        Long expire = Enum.getExpire();
+        HashMap<String, String> stringData = new HashMap<>();
+        data.forEach((dataKey, value) ->
+                stringData.put(dataKey, JsonUtils.objectToString(value)));
+        stringRedisTemplate.opsForHash().putAll(fullKey, stringData);
+        if (expire != null)
+        {
+            refreshExpire(fullKey, expire);
+        }
+        log.info("[setHashMap] key: {}, data: {}, expire: {}", fullKey, data, expire);
+    }
+
     /**
      * 放入hash类型的数据 - Hash<String, Object>
-     * @param key redis-key
-     * @param data 数据
+     *
+     * @param key    redis-key
+     * @param data   数据
      * @param expire 过期时间, 单位: 秒
      * @author CAIXYPROMISE
      * @version 1.0
@@ -97,6 +224,17 @@ public class RedisOperatorService
         log.info("[setHashMap] key: {}, data: {}, expire: {}", key, data, expire);
     }
 
+
+    public void setStringHashMap(RedisConstant Enum, Object itemName, HashMap<String, String> data, Long expire)
+    {
+        String fullKey = getFullKey(Enum, itemName);
+        stringRedisTemplate.opsForHash().putAll(fullKey, data);
+        if (expire != null)
+        {
+            refreshExpire(fullKey, Enum.getExpire());
+        }
+    }
+
     public void setStringHashMap(String key, HashMap<String, String> data, Long expire)
     {
         stringRedisTemplate.opsForHash().putAll(key, data);
@@ -104,6 +242,20 @@ public class RedisOperatorService
         {
             refreshExpire(key, expire);
         }
+    }
+
+
+    /**
+     * 放入字符串类型的字符
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2023/12/0 20:16
+     */
+    public void setString(RedisConstant Enum, Object itemName, String value)
+    {
+        String fullKey = getFullKey(Enum, itemName);
+        stringRedisTemplate.opsForValue().set(fullKey, value, Enum.getExpire(), TimeUnit.SECONDS);
     }
 
     /**
@@ -132,15 +284,27 @@ public class RedisOperatorService
      * @version 1.0
      * @since 2023/12/20 12:25
      */
+    public boolean hasKey(RedisConstant Enum, Object itemName)
+    {
+        String key = getFullKey(Enum, itemName);
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
+    }
+
+    /**
+     * 获取是否有对应的Key值存在
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2023/12/20 12:25
+     */
     public boolean hasKey(String key)
     {
         return Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
     }
 
-
-
-
+    // region 分布式锁
     // ===================================== 分布式锁 =====================================
+
     /**
      * 尝试获取分布式锁
      *
@@ -151,7 +315,7 @@ public class RedisOperatorService
      */
     public boolean tryGetDistributedLock(String lockKey, String requestId, Long expireTime)
     {
-        for (int i = 0; i < RedisConstant.MAX_RETRY_TIMES; i++)
+        for (int i = 0; i < MAX_RETRY_TIMES; i++)
         {
             Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey,
                     requestId, expireTime, TimeUnit.SECONDS);
@@ -161,8 +325,9 @@ public class RedisOperatorService
             }
             try
             {
-                Thread.sleep(RedisConstant.RETRY_INTERVAL);
-            } catch (InterruptedException e)
+                Thread.sleep(RETRY_INTERVAL);
+            }
+            catch (InterruptedException e)
             {
                 Thread.currentThread().interrupt();
             }
@@ -186,6 +351,8 @@ public class RedisOperatorService
         return false;
     }
 
+    // endregion
+    // region 排行榜实现
     // ===================== 排行榜实现 =====================
 
     /**
@@ -200,7 +367,7 @@ public class RedisOperatorService
      */
     public boolean zAdd(String key, Object value, double score)
     {
-        String lockKey = RedisConstant.REDIS_INVOKE_RANK_LOCK_KEY + key + ":lock";
+        String lockKey = REDIS_INVOKE_RANK_LOCK_KEY + key + ":lock";
         String requestId = UUID.randomUUID().toString();
         try
         {
@@ -214,7 +381,8 @@ public class RedisOperatorService
             manageRankSize(key);
             // 添加新记录
             return Boolean.TRUE.equals(stringRedisTemplate.opsForZSet().add(key, value.toString(), score));
-        } finally
+        }
+        finally
         {
             // 释放分布式锁
             releaseDistributedLock(lockKey, requestId);
@@ -275,10 +443,11 @@ public class RedisOperatorService
     private void manageRankSize(String key)
     {
         Long size = zGetSize(key);
-        if (size != null && size >= RedisConstant.REDIS_INVOKE_RANK_MAX_SIZE)
+        if (size != null && size >= REDIS_INVOKE_RANK_MAX_SIZE)
         {
             // 移除最低分数的记录
-            Set<ZSetOperations.TypedTuple<String>> lowestScoreSet = stringRedisTemplate.opsForZSet().rangeWithScores(key, 0, 0);
+            Set<ZSetOperations.TypedTuple<String>> lowestScoreSet =
+                    stringRedisTemplate.opsForZSet().rangeWithScores(key, 0, 0);
             if (lowestScoreSet != null && !lowestScoreSet.isEmpty())
             {
                 Double lowestScore = lowestScoreSet.iterator().next().getScore();
@@ -358,5 +527,7 @@ public class RedisOperatorService
     {
         return stringRedisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, start, end);
     }
+
+    // endregion
 
 }

@@ -10,6 +10,8 @@ import com.caixy.userservice.mapper.MajorInfoMapper;
 import com.caixy.userservice.service.MajorInfoService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
 * @author CAIXYPROMISE
 * @description 针对表【major_info(专业信息表)】的数据库操作Service实现
@@ -52,6 +54,12 @@ public class MajorInfoServiceImpl extends ServiceImpl<MajorInfoMapper, MajorInfo
     public Page<MajorInfoWithDepartmentQueryVO> listMajorInfoWithDepartment(long current, long size)
     {
         return this.baseMapper.listMajorWithDepartmentByPage(new Page<>(current, size));
+    }
+
+    @Override
+    public List<MajorInfoWithDepartmentQueryVO> getMajorWithDepartment()
+    {
+        return this.baseMapper.getMajorWithDepartment();
     }
 
     @Override

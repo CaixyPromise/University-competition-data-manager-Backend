@@ -1,31 +1,40 @@
 package com.caixy.userservice.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caixy.common.annotation.AuthCheck;
 import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.DeleteRequest;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
+import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.major.MajorInfoAddRequest;
 import com.caixy.model.dto.major.MajorInfoQueryRequest;
 import com.caixy.model.dto.major.MajorInfoUpdateRequest;
+import com.caixy.model.entity.DepartmentInfo;
 import com.caixy.model.entity.MajorInfo;
 import com.caixy.model.entity.User;
-import com.caixy.model.enums.UserRoleEnum;
+import com.caixy.model.vo.department.DepartmentWithMajorsVO;
 import com.caixy.model.vo.major.MajorInfoVO;
 import com.caixy.model.vo.major.MajorInfoWithDepartmentQueryVO;
 import com.caixy.model.vo.major.MajorWithDepartmentVO;
 import com.caixy.userservice.service.DepartmentInfoService;
 import com.caixy.userservice.service.MajorInfoService;
 import com.caixy.userservice.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 专业信息接口控制器
@@ -36,16 +45,52 @@ import javax.servlet.http.HttpServletRequest;
  **/
 @RestController
 @RequestMapping("/major")
+@Slf4j
 public class MajorInfoController
 {
     @Resource
     private MajorInfoService majorInfoService;
 
     @Resource
+    private RedisOperatorService redisOperatorService;
+
+
+    @Resource
     private UserService userService;
 
     @Resource
     private DepartmentInfoService departmentInfoService;
+
+    /**
+     * 获取全部学院+专业信息
+     */
+    @GetMapping("/get/all")
+    public BaseResponse<List<DepartmentWithMajorsVO>> getAllDepartmentAndMajor()
+    {
+        DepartmentWithMajorsVO result = new DepartmentWithMajorsVO();
+        Map<String, List<MajorInfoWithDepartmentQueryVO>> majorsMap = majorInfoService.getMajorWithDepartment()
+                .stream()
+                .collect(Collectors.groupingBy(MajorInfoWithDepartmentQueryVO::getDepartmentId));
+        log.info("majors is: {}", majorsMap);
+        List<DepartmentWithMajorsVO> departments = majorsMap.entrySet().stream().map(entry -> {
+            DepartmentWithMajorsVO departmentWithMajorsVO = new DepartmentWithMajorsVO();
+            // 假设第一个元素代表该部门的信息
+            MajorInfoWithDepartmentQueryVO firstElement = entry.getValue().get(0);
+            departmentWithMajorsVO.setDepartmentId(Long.parseLong(entry.getKey()));
+            departmentWithMajorsVO.setDepartmentName(firstElement.getDepartmentName());
+            List<DepartmentWithMajorsVO.MajorInnerInfo> majorInnerInfos = entry.getValue().stream().map(major -> {
+                DepartmentWithMajorsVO.MajorInnerInfo majorInnerInfo = new DepartmentWithMajorsVO.MajorInnerInfo();
+                majorInnerInfo.setMajorId(major.getMajorId());
+                majorInnerInfo.setMajorName(major.getMajorName());
+                return majorInnerInfo;
+            }).collect(Collectors.toList());
+            departmentWithMajorsVO.setMajors(majorInnerInfos);
+            return departmentWithMajorsVO;
+        }).collect(Collectors.toList());
+        //  缓存到redis
+        redisOperatorService.setString(RedisConstant.ALL_ACADEMY_MAJOR, "ALL", JSONUtil.toJsonStr(departments));
+        return ResultUtils.success(departments);
+    }
 
     // region 增删改查
 
@@ -89,9 +134,20 @@ public class MajorInfoController
         post.setDepartId(departmentId);
         post.setCreateUserId(loginUser.getId());
 
+        // 保存到数据库
         boolean result = majorInfoService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newMajorInfoId = post.getId();
+        // 更新进redis
+        Map<Object, Object> dataMap = getDepartmentInfoMap(departmentId);
+        if (dataMap.isEmpty())
+        {
+            dataMap = new HashMap<>();
+            DepartmentInfo departmentInfo = departmentInfoService.getById(departmentId);
+            dataMap.put("_name", departmentInfo.getName());
+        }
+        dataMap.put(String.valueOf(newMajorInfoId), post.getName());
+        setDepartmentInfoToMap(departmentId, dataMap);
         return ResultUtils.success(newMajorInfoId);
     }
 
@@ -187,5 +243,17 @@ public class MajorInfoController
         return ResultUtils.success(postPage);
     }
 
+    // endregion
+
+    //region redis操作获取学院信息
+    private Map<Object, Object> getDepartmentInfoMap(long id)
+    {
+        return redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR, String.valueOf(id));
+    }
+
+    private void setDepartmentInfoToMap(long id, Object map)
+    {
+        redisOperatorService.setHashMap(RedisConstant.ACADEMY_MAJOR, id, (HashMap<String, Object>) map);
+    }
     // endregion
 }

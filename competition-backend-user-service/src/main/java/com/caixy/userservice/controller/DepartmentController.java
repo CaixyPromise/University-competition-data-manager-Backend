@@ -6,18 +6,19 @@ import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.DeleteRequest;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
+import com.caixy.common.utils.JsonUtils;
+import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.department.DepartmentInfoAddRequest;
 import com.caixy.model.dto.department.DepartmentInfoQueryRequest;
 import com.caixy.model.dto.department.DepartmentInfoUpdateRequest;
-import com.caixy.model.dto.department.DepartmentWithMajorsDTO;
 import com.caixy.model.entity.DepartmentInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.department.DepartmentInfoVO;
 import com.caixy.model.vo.department.DepartmentWithMajorsVO;
-import com.caixy.model.vo.major.MajorInfoVO;
 import com.caixy.userservice.service.DepartmentInfoService;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -46,14 +49,17 @@ public class DepartmentController
     private DepartmentInfoService departmentInfoService;
 
     @Resource
+    private RedisOperatorService redisOperatorService;
+
+    @Resource
     private UserService userService;
 
     /**
      * 获取学院下的专业信息
      *
      * @author CAIXYPROMISE
-     * @since 2024/2/11 01:08
      * @version 1.0
+     * @since 2024/2/11 01:08
      */
     @GetMapping("/get/vo/department-major")
     public BaseResponse<DepartmentWithMajorsVO> getMajorUnderDepartment(
@@ -63,26 +69,53 @@ public class DepartmentController
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不合法");
         }
-        List<DepartmentWithMajorsDTO> departments =
-                departmentInfoService.getMajorUnderDepartment(departmentId);
-        if (departments.isEmpty())
+        Map<Object, Object>
+                departmentInfo =
+                redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR.getKey(), String.valueOf(departmentId));
+        if (departmentInfo.isEmpty())
         {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "未找到该学院下的专业");
         }
-        DepartmentWithMajorsVO departmentWithMajorsVO =
-                new DepartmentWithMajorsVO();
-        DepartmentWithMajorsDTO departmentWithMajorsDTO = departments.get(0);
-        departmentWithMajorsVO.setDepartmentId(departmentWithMajorsDTO.getDepartmentId());
-        departmentWithMajorsVO.setDepartmentName(departmentWithMajorsDTO.getDepartmentName());
-        List<DepartmentWithMajorsVO.MajorInnerInfo> majors = departments.stream().map(dept ->
+        else
         {
-            DepartmentWithMajorsVO.MajorInnerInfo majorInfoVO = new DepartmentWithMajorsVO.MajorInnerInfo();
-            majorInfoVO.setMajorId(dept.getMajorId());
-            majorInfoVO.setMajorName(dept.getMajorName());
-            return majorInfoVO;
-        }).collect(Collectors.toList());
-        departmentWithMajorsVO.setMajors(majors);
-        return ResultUtils.success(departmentWithMajorsVO);
+            DepartmentWithMajorsVO departmentWithMajorsVO =
+                    new DepartmentWithMajorsVO();
+            departmentWithMajorsVO.setDepartmentName(JsonUtils.jsonToObject((String) departmentInfo.get("_name"), String.class));
+            departmentWithMajorsVO.setDepartmentId(departmentId);
+            List<DepartmentWithMajorsVO.MajorInnerInfo> majors = departmentInfo.entrySet()
+                    .stream()
+                    .filter(entry -> !entry.getKey().equals("_name"))
+                    .map(entry ->
+                    {
+                        DepartmentWithMajorsVO.MajorInnerInfo majorInfo = new DepartmentWithMajorsVO.MajorInnerInfo();
+                        majorInfo.setMajorId(Long.valueOf((String) entry.getKey()));
+                        majorInfo.setMajorName(JsonUtils.jsonToObject((String) entry.getValue(), String.class));
+                        return majorInfo;
+                    })
+                    .collect(Collectors.toList());
+            departmentWithMajorsVO.setMajors(majors);
+            return ResultUtils.success(departmentWithMajorsVO);
+        }
+//        List<DepartmentWithMajorsDTO> departments =
+//                departmentInfoService.getMajorUnderDepartment(departmentId);
+//        if (departments.isEmpty())
+//        {
+//            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "未找到该学院下的专业");
+//        }
+//        DepartmentWithMajorsVO departmentWithMajorsVO =
+//                new DepartmentWithMajorsVO();
+//        DepartmentWithMajorsDTO departmentWithMajorsDTO = departments.get(0);
+//        departmentWithMajorsVO.setDepartmentId(departmentWithMajorsDTO.getDepartmentId());
+//        departmentWithMajorsVO.setDepartmentName(departmentWithMajorsDTO.getDepartmentName());
+//        List<DepartmentWithMajorsVO.MajorInnerInfo> majors = departments.stream().map(dept ->
+//        {
+//            DepartmentWithMajorsVO.MajorInnerInfo majorInfoVO = new DepartmentWithMajorsVO.MajorInnerInfo();
+//            majorInfoVO.setMajorId(dept.getMajorId());
+//            majorInfoVO.setMajorName(dept.getMajorName());
+//            return majorInfoVO;
+//        }).collect(Collectors.toList());
+//        departmentWithMajorsVO.setMajors(majors);
+//        return ResultUtils.success(departmentWithMajorsVO);
     }
 
 
@@ -107,14 +140,19 @@ public class DepartmentController
 
         User loginUser = userService.getLoginUser(request);
         post.setCreateUserId(loginUser.getId());
-        boolean isExist = departmentInfoService.departmentExistByName(post.getName());
-        if (isExist)
+        boolean departmentIsExist = departmentInfoService.departmentExistByName(post.getName());
+        if (departmentIsExist)
         {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "学院已存在");
         }
+        // 更新到数据库
         boolean result = departmentInfoService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newDepartmentInfoId = post.getId();
+        // 更新到redis
+        Map<Object, Object> infoMap = new HashMap<>();
+        infoMap.put("_name", post.getName());
+        setDepartmentInfoToMap(newDepartmentInfoId, infoMap);
         return ResultUtils.success(newDepartmentInfoId);
     }
 
@@ -167,17 +205,28 @@ public class DepartmentController
         DepartmentInfo oldDepartmentInfo = departmentInfoService.getById(id);
         ThrowUtils.throwIf(oldDepartmentInfo == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = departmentInfoService.updateById(post);
+        if (!postUpdateRequest.getName().equals(oldDepartmentInfo.getName()))
+        {
+            Map<Object, Object> innerData = redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR.getKey(),
+                    post.getId().toString());
+            if (!innerData.isEmpty())
+            {
+                // 把innerData里的_name替换成新的name
+                innerData.put("_name", postUpdateRequest.getName());
+            }
+            setDepartmentInfoToMap(post.getId(), innerData);
+        }
         return ResultUtils.success(result);
     }
 
     /**
-     * 根据 id 获取
+     * 根据 id 获取 学院信息
      *
      * @param id
      * @return
      */
     @GetMapping("/get/vo")
-    public BaseResponse<DepartmentInfoVO> getDepartmentInfoVOById(long id, HttpServletRequest request)
+    public BaseResponse<DepartmentInfoVO> getDepartmentInfoVOById(@RequestParam long id, HttpServletRequest request)
     {
         if (id <= 0)
         {
@@ -209,5 +258,19 @@ public class DepartmentController
         return ResultUtils.success(postPage);
     }
 
+    // endregion
+
+
+    //region redis操作获取学院信息
+    private Map<Object, Object> getDepartmentInfoMap(long id)
+    {
+        return redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR.getKey(), String.valueOf(id));
+    }
+
+    private void setDepartmentInfoToMap(long id, Object map)
+    {
+        redisOperatorService.setHashMap(RedisConstant.ACADEMY_MAJOR.getKey() + id, (HashMap<String, Object>) map,
+                RedisConstant.ACADEMY_MAJOR.getExpire());
+    }
     // endregion
 }

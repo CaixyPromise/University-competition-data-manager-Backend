@@ -82,10 +82,10 @@ public class DataLoaderRunner implements ApplicationRunner
         log.info("学院+专业信息缓存预热，组织后的数据：{}", organizedData);
 
         // 更新缓存
-        organizedData.forEach((key, value) ->
+        organizedData.forEach((idKey, value) ->
         {
-            redisOperatorService.setHashMap(RedisConstant.ACADEMY_MAJOR_KEY + key, value, RedisConstant.ACADEMY_MAJOR_EXPIRE);
-            log.info("学院专业信息缓存更新成功，学院id: {}, 学院名称: {}", key, value.get("_name"));
+            redisOperatorService.setHashMap(RedisConstant.ACADEMY_MAJOR, idKey, value);
+            log.info("学院专业信息缓存更新成功，学院id: {}, 学院名称: {}", idKey, value.get("_name"));
         });
     }
 }

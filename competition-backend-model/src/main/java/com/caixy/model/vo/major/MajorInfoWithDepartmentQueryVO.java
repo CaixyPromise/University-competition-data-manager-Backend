@@ -26,21 +26,19 @@ public class MajorInfoWithDepartmentQueryVO implements Serializable
     /**
      * 专业id
      */
-    private Long id;
+    private Long majorId;
     /**
-     * 学院名称
+     * 专业名称
      */
-    private String name;
+    private String majorName;
     /**
      * 添加人id
      */
     private Long createUserId;
-
     /**
      * 创建时间
      */
     private Date createTime;
-
     /**
      * 更新时间
      */

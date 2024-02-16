@@ -20,9 +20,9 @@
     </sql>
 
     <sql id="Base_Major_query">
-        SELECT m.id,
+        SELECT m.id   AS majorId,
                m.departId,
-               m.name,
+               m.name AS majorName,
                m.createUserId,
                m.createTime,
                m.updateTime,

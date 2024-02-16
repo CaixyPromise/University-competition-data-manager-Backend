@@ -6,6 +6,8 @@ import com.caixy.model.entity.MajorInfo;
 import com.caixy.model.vo.major.MajorInfoWithDepartmentQueryVO;
 import com.caixy.model.vo.major.MajorWithDepartmentVO;
 
+import java.util.List;
+
 /**
  * @author CAIXYPROMISE
  * @description 针对表【major_info(专业信息表)】的数据库操作Service
@@ -19,5 +21,8 @@ public interface MajorInfoService extends IService<MajorInfo>
     boolean majorExistById(Long departmentId);
 
     Page<MajorInfoWithDepartmentQueryVO> listMajorInfoWithDepartment(long current, long size);
+
+    List<MajorInfoWithDepartmentQueryVO> getMajorWithDepartment();
+
     MajorWithDepartmentVO getMajorWithDepartmentById(long id);
 }

@@ -1,14 +1,15 @@
 package com.caixy.model.vo.match;
 
 import com.caixy.common.utils.JsonUtils;
+import com.caixy.model.dto.match.properties.MatchAward;
 import com.caixy.model.entity.MatchInfo;
 import com.google.gson.reflect.TypeToken;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 比赛信息分页查询VO
@@ -65,16 +66,11 @@ public class MatchInfoQueryVO implements Serializable
      * 比赛所允许的分组(学院/部门): 默认为全部学院/专业专业可以参加 json
      * expect:
      * {
-     *      "departmentId_1": [...majorId_1, major_2],
-     *      "departmentId_2": [...majorId_1, major_2]
+     * "departmentId_1": [...majorId_1, major_2],
+     * "departmentId_2": [...majorId_1, major_2]
      * }
      */
-    private Map<String, List<String>> matchPermissionRule;
-    @Data
-    public static class MatchPermissionRule
-    {
-        private Map<Long, List<Long>> permissions;
-    }
+    private HashMap<Long, List<Long>> matchPermissionRule;
 
 
     /**
@@ -85,7 +81,7 @@ public class MatchInfoQueryVO implements Serializable
      * "tagName_2": "tagDesc_2"
      * }
      */
-    private Map<String, String> matchTags;
+    private List<String> matchTags;
 
 
     /**
@@ -96,12 +92,17 @@ public class MatchInfoQueryVO implements Serializable
      * "awardName_2": "awardDesc_2"
      * }
      */
-    private Map<String, String> matchAward;
+    private List<MatchAward> matchAward;
 
     /**
-     * 比赛团队大小
+     * 最大团队人数
      */
-    private Integer teamSize;
+
+    private Integer maxTeamSize;
+    /**
+     * 最小团队人数
+     */
+    private Integer minTeamSize;
 
     /**
      * 比赛开始时间
@@ -113,8 +114,51 @@ public class MatchInfoQueryVO implements Serializable
      */
     private Date endTime;
 
+    /**
+     * 报名开始日期
+     */
+    private Date signUpStartTime;
 
-    public static MatchInfoQueryVO EntityToVO(MatchInfo matchInfo)
+    /**
+     * 报名截止时间
+     */
+    private Date signUpEndTime;
+
+
+
+    public static MatchInfoQueryVO convertToAdminVO(MatchInfo matchInfo)
+    {
+        MatchInfoQueryVO vo = new MatchInfoQueryVO();
+        vo.setId(matchInfo.getId());
+        vo.setMatchName(matchInfo.getMatchName());
+//        vo.setMatchDesc(matchInfo.getMatchDesc());
+        vo.setMatchStatus(matchInfo.getMatchStatus());
+        vo.setMatchPic(matchInfo.getMatchPic());
+        vo.setMatchType(matchInfo.getMatchType());
+        vo.setMatchLevel(matchInfo.getMatchLevel());
+        vo.setMatchRule(matchInfo.getMatchRule());
+//        vo.setTeamSize(matchInfo.getTeamSize());
+        vo.setStartTime(matchInfo.getStartTime());
+        vo.setEndTime(matchInfo.getEndTime());
+        vo.setSignUpStartTime(matchInfo.getSignUpStartTime());
+        vo.setSignUpEndTime(matchInfo.getSignUpEndTime());
+        // 使用 jsonToObject 方法转换 JSON 字符串到指定类型
+
+        vo.setMatchPermissionRule(JsonUtils.jsonToObject(matchInfo.getMatchPermissionRule(),
+                new TypeToken<HashMap<Long, List<Long>>>()
+                {
+                }.getType()));
+
+        List<String> tags = JsonUtils.jsonToList(matchInfo.getMatchTags());
+        vo.setMatchTags(tags);
+
+        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
+        vo.setMatchAward(award);
+        return vo;
+    }
+
+
+    public static MatchInfoQueryVO convertToVO(MatchInfo matchInfo)
     {
         MatchInfoQueryVO vo = new MatchInfoQueryVO();
         vo.setId(matchInfo.getId());
@@ -124,19 +168,24 @@ public class MatchInfoQueryVO implements Serializable
         vo.setMatchPic(matchInfo.getMatchPic());
         vo.setMatchType(matchInfo.getMatchType());
         vo.setMatchLevel(matchInfo.getMatchLevel());
-        vo.setMatchRule(matchInfo.getMatchRule());
-        vo.setTeamSize(matchInfo.getTeamSize());
+        vo.setMaxTeamSize(matchInfo.getMaxTeamSize());
+        vo.setMinTeamSize(matchInfo.getMinTeamSize());
         vo.setStartTime(matchInfo.getStartTime());
         vo.setEndTime(matchInfo.getEndTime());
+        vo.setSignUpStartTime(matchInfo.getSignUpStartTime());
+        vo.setSignUpEndTime(matchInfo.getSignUpEndTime());
         // 使用 jsonToObject 方法转换 JSON 字符串到指定类型
-        Map<String, List<String>> permissionRule = JsonUtils.jsonToObject(matchInfo.getMatchPermissionRule(), new TypeToken<Map<String, List<String>>>(){}.getType());
-        vo.setMatchPermissionRule(permissionRule);
 
-        Map<String, String> tags = JsonUtils.jsonToObject(matchInfo.getMatchTags(), new TypeToken<Map<String, String>>(){}.getType());
+        vo.setMatchPermissionRule(JsonUtils.jsonToObject(matchInfo.getMatchPermissionRule(),
+                new TypeToken<HashMap<Long, List<Long>>>()
+                {
+                }.getType()));
+
+        List<String> tags = JsonUtils.jsonToList(matchInfo.getMatchTags());
         vo.setMatchTags(tags);
 
-        Map<String, String> award = JsonUtils.jsonToObject(matchInfo.getMatchAward(), new TypeToken<Map<String, String>>(){}.getType());
-        vo.setMatchAward(award);
+//        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
+//        vo.setMatchAward(award);
         return vo;
     }
 

@@ -17,8 +17,8 @@ import java.io.File;
  * @since: 2024-02-13 02:39
  **/
 @Component
-public class CosManager {
-
+public class CosManager
+{
     @Resource
     private CosClientConfig cosClientConfig;
 
@@ -28,11 +28,12 @@ public class CosManager {
     /**
      * 上传对象
      *
-     * @param key 唯一键
+     * @param key           唯一键-对象桶里的存放位置
      * @param localFilePath 本地文件路径
      * @return
      */
-    public PutObjectResult putObject(String key, String localFilePath) {
+    public PutObjectResult putObject(String key, String localFilePath)
+    {
         PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
                 new File(localFilePath));
         return cosClient.putObject(putObjectRequest);
@@ -41,11 +42,12 @@ public class CosManager {
     /**
      * 上传对象
      *
-     * @param key 唯一键
+     * @param key  唯一键-对象桶里存放位置
      * @param file 文件
      * @return
      */
-    public PutObjectResult putObject(String key, File file) {
+    public PutObjectResult putObject(String key, File file)
+    {
         PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
                 file);
         return cosClient.putObject(putObjectRequest);

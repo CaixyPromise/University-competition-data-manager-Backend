@@ -1,16 +1,19 @@
 package com.caixy.common.common;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
 /**
  * 删除请求
- *
- 
  */
 @Data
-public class DeleteRequest implements Serializable {
+@AllArgsConstructor
+@NoArgsConstructor
+public class DeleteRequest implements Serializable
+{
 
     /**
      * id

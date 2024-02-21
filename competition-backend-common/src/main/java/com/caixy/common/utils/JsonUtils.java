@@ -48,14 +48,15 @@ public class JsonUtils
      * 将 JSON 字符串转换为对象列表
      *
      * @param json    JSON 字符串
-     * @param typeOfT 对象列表的类型
      * @param <T>     对象类型
      * @return 对象列表
      */
-    public static <T> List<T> jsonToList(String json, Type typeOfT)
+    public static <T> List<T> jsonToList(String json)
     {
-        return gson.fromJson(json, typeOfT);
+        return jsonToObject(json, new TypeToken<List<T>>(){}.getType());
     }
+
+
 
     public static <T> T jsonToObject(String json, Class<T> targetType)
     {

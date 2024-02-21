@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @SpringBootTest
 @Slf4j
-class CompetitionBackendUserServiceApplicationTests
+class UserServiceApplicationTests
 {
     @Resource
     private DepartmentInfoMapper departmentInfoService;

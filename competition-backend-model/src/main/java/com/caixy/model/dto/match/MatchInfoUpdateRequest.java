@@ -1,10 +1,10 @@
 package com.caixy.model.dto.match;
 
+import com.caixy.model.dto.match.properties.MatchPermission;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,13 +65,8 @@ public class MatchInfoUpdateRequest implements Serializable
      * "departmentId_2": [...majorId_1, major_2]
      * }
      */
-    private MatchInfoAddRequest.MatchPermissionRule matchPermissionRule;
+    private MatchPermission matchPermissionRule;
 
-    @Data
-    public static class MatchPermissionRule
-    {
-        private Map<Long, List<Long>> permissions;
-    }
 
 
     /**

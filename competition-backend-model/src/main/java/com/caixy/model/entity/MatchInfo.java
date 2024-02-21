@@ -75,14 +75,34 @@ public class MatchInfo implements Serializable
     private String matchAward;
 
     /**
+     * 比赛附件列表
+     */
+    private String matchFileList;
+
+    /**
      * 比赛创建人id
      */
     private Long createdUser;
 
     /**
-     * 比赛团队大小
+     * 最大比赛团队大小
      */
-    private Integer teamSize;
+    private Integer maxTeamSize;
+
+    /**
+     * 最小团队人数
+     */
+    private Integer minTeamSize;
+
+    /**
+     * 比赛报名开始时间
+     */
+    private Date signUpStartTime;
+
+    /**
+     * 比赛报名结束时间
+     */
+    private Date signUpEndTime;
 
     /**
      * 比赛开始时间

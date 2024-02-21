@@ -8,18 +8,20 @@ import java.util.stream.Collectors;
 
 /**
  * 文件上传业务类型枚举
- *
- 
  */
-public enum FileUploadBizEnum {
+public enum FileUploadBizEnum
+{
 
-    USER_AVATAR("用户头像", "user_avatar");
+    USER_AVATAR("用户头像", "user_avatar"),
+
+    COMPETITION_LOGO("比赛logo图片",  "competition_logo");
 
     private final String text;
 
     private final String value;
 
-    FileUploadBizEnum(String text, String value) {
+    FileUploadBizEnum(String text, String value)
+    {
         this.text = text;
         this.value = value;
     }
@@ -29,7 +31,8 @@ public enum FileUploadBizEnum {
      *
      * @return
      */
-    public static List<String> getValues() {
+    public static List<String> getValues()
+    {
         return Arrays.stream(values()).map(item -> item.value).collect(Collectors.toList());
     }
 
@@ -39,23 +42,29 @@ public enum FileUploadBizEnum {
      * @param value
      * @return
      */
-    public static FileUploadBizEnum getEnumByValue(String value) {
-        if (ObjectUtils.isEmpty(value)) {
+    public static FileUploadBizEnum getEnumByValue(String value)
+    {
+        if (ObjectUtils.isEmpty(value))
+        {
             return null;
         }
-        for (FileUploadBizEnum anEnum : FileUploadBizEnum.values()) {
-            if (anEnum.value.equals(value)) {
+        for (FileUploadBizEnum anEnum : FileUploadBizEnum.values())
+        {
+            if (anEnum.value.equals(value))
+            {
                 return anEnum;
             }
         }
         return null;
     }
 
-    public String getValue() {
+    public String getValue()
+    {
         return value;
     }
 
-    public String getText() {
+    public String getText()
+    {
         return text;
     }
 }

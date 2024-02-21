@@ -16,8 +16,12 @@
             <result property="matchPermissionRule" column="matchPermissionRule" jdbcType="VARCHAR"/>
             <result property="matchTags" column="matchTags" jdbcType="VARCHAR"/>
             <result property="matchAward" column="matchAward" jdbcType="VARCHAR"/>
+            <result property="matchFileList" column="matchFileList" jdbcType="VARCHAR"/>
             <result property="createdUser" column="createdUser" jdbcType="BIGINT"/>
-            <result property="teamSize" column="teamSize" jdbcType="INTEGER"/>
+            <result property="maxTeamSize" column="maxTeamSize" jdbcType="INTEGER"/>
+            <result property="minTeamSize" column="minTeamSize" jdbcType="INTEGER"/>
+            <result property="signUpStartTime" column="signUpStartTime" jdbcType="TIMESTAMP"/>
+            <result property="signUpEndTime" column="signUpEndTime" jdbcType="TIMESTAMP"/>
             <result property="startTime" column="startTime" jdbcType="TIMESTAMP"/>
             <result property="endTime" column="endTime" jdbcType="TIMESTAMP"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
@@ -29,8 +33,10 @@
         id,matchName,matchDesc,
         matchStatus,matchPic,matchType,
         matchLevel,matchRule,matchPermissionRule,
-        matchTags,matchAward,createdUser,
-        teamSize,startTime,endTime,
-        createTime,updateTime,isDelete
+        matchTags,matchAward,matchFileList,
+        createdUser,maxTeamSize,minTeamSize,
+        signUpStartTime,signUpEndTime,startTime,
+        endTime,createTime,updateTime,
+        isDelete
     </sql>
 </mapper>

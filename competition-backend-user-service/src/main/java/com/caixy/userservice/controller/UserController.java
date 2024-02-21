@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户接口
@@ -275,7 +276,9 @@ public class UserController
         long size = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
-        List<User> userList = userPage.getRecords();
+        List<User> userList = userPage.getRecords().stream().peek(user -> user.setUserPassword(null)).collect(Collectors.toList());
+
+        userPage.setRecords(userList);
         return ResultUtils.success(userPage);
     }
 

@@ -85,7 +85,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.caixy.userservice.CompetitionBackendUserServiceApplication</mainClass>
+                    <mainClass>com.caixy.userservice.UserServiceApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>

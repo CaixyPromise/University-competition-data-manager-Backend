@@ -16,10 +16,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan("com.caixy")
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = {"com.caixy.serviceclient.service"})
-public class CompetitionBackendUserServiceApplication
+public class UserServiceApplication
 {
     public static void main(String[] args)
     {
-        SpringApplication.run(CompetitionBackendUserServiceApplication.class, args);
+        SpringApplication.run(UserServiceApplication.class, args);
     }
 }

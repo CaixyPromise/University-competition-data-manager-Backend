@@ -176,6 +176,13 @@ public class MajorInfoController
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean b = majorInfoService.removeById(id);
+        // 更新redis
+        Map<Object, Object> departmentInfoMap = getDepartmentInfoMap(oldMajorInfo.getDepartId());
+        if (!departmentInfoMap.isEmpty() && departmentInfoMap.containsKey(String.valueOf(oldMajorInfo.getId())))
+        {
+            departmentInfoMap.remove(String.valueOf(oldMajorInfo.getId()));
+        }
+        setDepartmentInfoToMap(oldMajorInfo.getDepartId(), departmentInfoMap);
         return ResultUtils.success(b);
     }
 

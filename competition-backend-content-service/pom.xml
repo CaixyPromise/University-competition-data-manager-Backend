@@ -80,7 +80,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.caixy.contentservice.CompetitionBackendContentServiceApplication</mainClass>
+                    <mainClass>com.caixy.contentservice.ContentServiceApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>

@@ -13,6 +13,10 @@ spring:
           uri: lb://competition-backend-competition-service
           predicates:
             - Path=/api/competition/**
+        - id: competition-backend-content-service
+          uri: lb://competition-backend-content-service
+          predicates:
+            - Path=/api/content/**
   application:
     name: competition-backend-gateway
   main:

@@ -72,11 +72,13 @@ public class FileController
             cosManager.putObject(filepath, file);
             // 返回可访问地址
             return ResultUtils.success(FileConstant.COS_HOST + filepath);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
-            log.error("file upload error, filepath = " + filepath, e);
+            log.error("FileUploadInnerRequest upload error, filepath = " + filepath, e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
-        } finally
+        }
+        finally
         {
             if (file != null)
             {
@@ -84,7 +86,7 @@ public class FileController
                 boolean delete = file.delete();
                 if (!delete)
                 {
-                    log.error("file delete error, filepath = {}", filepath);
+                    log.error("FileUploadInnerRequest delete error, filepath = {}", filepath);
                 }
             }
         }

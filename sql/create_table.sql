@@ -65,29 +65,34 @@ CREATE TABLE IF NOT EXISTS `major_info`
 -- endregion
 
 -- region比赛信息表
-CREATE TABLE IF NOT EXISTS `match_info`
+DROP TABLE IF EXISTS `match_info`;
+create table match_info
 (
-    id                  BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY COMMENT '比赛ID',
-    matchName           VARCHAR(80)                        NOT NULL COMMENT '比赛名称',
-    matchDesc           TEXT                               NOT NULL COMMENT '比赛描述',
-    matchStatus         TINYINT                            NOT NULL COMMENT '比赛状态: 0-报名中; 1-已开始; 2-已结束;',
-    matchPic            VARCHAR(1024)                      NOT NULL COMMENT '比赛宣传图片(logo)',
-    matchType           VARCHAR(20)                        NOT NULL COMMENT '比赛类型: A类, B类, C类',
-    matchLevel          VARCHAR(20)                        NOT NULL COMMENT '比赛等级: 国家级, 省级',
-    matchRule           TEXT                               NOT NULL COMMENT '比赛规则',
-    matchPermissionRule TEXT                               NOT NULL COMMENT '比赛所允许的分组(学院/部门): 默认为全部学院/专业专业可以参加',
-    matchTags           TEXT                               NOT NULL COMMENT '比赛标签',
-    matchAward          TEXT                               NOT NULL COMMENT '比赛奖品',
-    createdUser         BIGINT                             NOT NULL COMMENT '比赛创建人id',
-    teamSize            INT(11)                            NOT NULL COMMENT '比赛团队大小',
-    startTime           TIMESTAMP                          NOT NULL COMMENT '比赛开始时间',
-    endTime             TIMESTAMP                          NOT NULL COMMENT '比赛结束时间',
-    createTime          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    updateTime          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    isDelete            TINYINT  DEFAULT 0                 NOT NULL COMMENT '是否删除'
-) COMMENT '比赛信息表'
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+    id                  bigint auto_increment comment '比赛ID'
+        primary key,
+    matchName           varchar(80)                             not null comment '比赛名称',
+    matchDesc           text                                    not null comment '比赛描述：限制长度1024',
+    matchStatus         tinyint                                 not null comment '比赛状态',
+    matchPic            varchar(1024)                           not null comment '比赛宣传图片(logo): cos存储链接',
+    matchType           varchar(20)                             not null comment '比赛类型: A类, B类, C类',
+    matchLevel          varchar(20)                             not null comment '比赛等级: 国家级, 省级',
+    matchRule           text                                    not null comment '比赛规则：限制长度1024',
+    matchPermissionRule text                                    not null comment '比赛所允许的分组(学院/部门): 默认为全部学院/专业专业可以参加',
+    matchTags           text                                    not null comment '比赛标签，每个限制字符长度：20',
+    matchAward          text                                    not null comment '比赛奖品, 全部不为空 长度 != 0且 maxRewardNameLength=20, maxRewardContentLength=36, maxRewardDescLength=96, maxRewardCount=100',
+    matchFileList       text                                    not null comment '比赛附件列表',
+    createdUser         bigint                                  not null comment '比赛创建人id',
+    maxTeamSize         int                                     not null comment '最大比赛团队大小 100',
+    minTeamSize         int       default 1                     not null comment '最小团队人数 1',
+    signUpStartTime     timestamp default CURRENT_TIMESTAMP     not null on update CURRENT_TIMESTAMP comment '比赛报名开始时间',
+    signUpEndTime       timestamp                               null comment '比赛报名结束时间',
+    startTime           timestamp default CURRENT_TIMESTAMP     not null on update CURRENT_TIMESTAMP comment '比赛开始时间',
+    endTime             timestamp default '0000-00-00 00:00:00' not null comment '比赛结束时间',
+    createTime          datetime  default CURRENT_TIMESTAMP     not null comment '创建时间',
+    updateTime          datetime  default CURRENT_TIMESTAMP     not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete            tinyint   default 0                     not null comment '是否删除'
+)
+    comment '比赛信息表' collate = utf8mb4_unicode_ci;
 -- endregion
 
 -- region 公告推送信息表

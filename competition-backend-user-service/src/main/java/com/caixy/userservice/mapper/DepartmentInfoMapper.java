@@ -17,19 +17,18 @@ import java.util.Map;
 public interface DepartmentInfoMapper extends BaseMapper<DepartmentInfo>
 {
     List<DepartmentWithMajorsDTO> selectMajorByDepartmentId(@Param("departmentId") Long departmentId);
+
     /**
      * 校验指定的学院ID和专业ID是否存在且对应关系正确。
      *
      * @param departmentIds 学院ID列表
-     * @param majorIds 专业ID列表
+     * @param majorIds      专业ID列表
      * @return 查询结果列表，每个元素为一个包含departmentId和majorId的Map
      */
     List<Map<String, Object>> validateDepartmentsAndMajors(
             @Param("departmentIds") List<Long> departmentIds,
             @Param("majorIds") List<Long> majorIds
     );
-
-
 
 
 }

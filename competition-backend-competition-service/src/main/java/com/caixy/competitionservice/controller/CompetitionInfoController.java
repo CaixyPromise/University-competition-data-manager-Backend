@@ -13,11 +13,13 @@ import com.caixy.common.common.DeleteRequest;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
 import com.caixy.common.constant.FileConstant;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
 import com.caixy.common.utils.InnerFileUtils;
 import com.caixy.common.utils.JsonUtils;
+import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.dto.feign.FileUploadInnerRequest;
@@ -28,6 +30,7 @@ import com.caixy.model.dto.match.properties.MatchPermission;
 import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.FileUploadBizEnum;
+import com.caixy.model.vo.match.MatchInfoProfileVO;
 import com.caixy.model.vo.match.MatchInfoQueryVO;
 import com.caixy.model.vo.user.UserWorkVO;
 import com.caixy.serviceclient.service.FileFeignClient;
@@ -70,6 +73,9 @@ public class CompetitionInfoController
     @Resource
     private FileFeignClient fileService;
 
+    @Resource
+    private RedisOperatorService redisOperatorService;
+
     private static final int COPY_PROPERTIES_ADD = 1;
 
     private static final int COPY_PROPERTIES_UPDATE = 2;
@@ -81,7 +87,13 @@ public class CompetitionInfoController
     // Logo图片限制最大大小：5mb
     private static final Long LOG_MAX_SIZE = 5 * 1024 * 1024L;
 
+    /**
+     * 允许全部学院参加比赛常量配置
+     */
+    private static final Long ALL_COLLEGE_ID = -999L;
+
     private static final byte[] JWT_TOKEN_KEY = "CAIXYPROMISE".getBytes();
+
 
     // region 增删改查
 
@@ -109,13 +121,17 @@ public class CompetitionInfoController
         }
 
         log.info("postAddRequest: {}", postAddRequest);
-//        // 获取登录用户
+        // 获取登录用户
         User loginUser = userService.getLoginUser(request);
         // 校验学院信息是否合法：判断是否存在对应的学院+专业
         HashMap<Long, List<Long>> processMatchPermissions =
                 processMatchPermissions(postAddRequest.getMatchPermissionRule());
         log.info("processMatchPermissions: {}", processMatchPermissions);
-        validateAndProcessPermissions(processMatchPermissions);
+        // 如果解析后的权限里有所有权限，则不需要校验学院+专业合法性
+        if (isPermissionCollege(processMatchPermissions))
+        {
+            validateAndProcessPermissions(processMatchPermissions);
+        }
 
         // DTO转Entity
         MatchInfo post = new MatchInfo();
@@ -239,8 +255,8 @@ public class CompetitionInfoController
      * @since 2024/2/23 19:05
      */
     @GetMapping("/get/profile")
-    public BaseResponse<MatchInfoQueryVO> getMatchInfo(@RequestParam(value = "id", required = true) Long id,
-                                                       HttpServletRequest request)
+    public BaseResponse<MatchInfoProfileVO> getMatchInfo(@RequestParam(value = "id", required = true) Long id,
+                                                         HttpServletRequest request)
     {
         if (id == null || id <= 0)
         {
@@ -255,7 +271,7 @@ public class CompetitionInfoController
         // 没有管理员权限
         if (!canAdmin)
         {
-            matchInfoQueryVO = MatchInfoQueryVO.convertToPageVO(matchInfo);
+            matchInfoQueryVO = MatchInfoQueryVO.convertToProfileVO(matchInfo);
         }
         else
         {   // 有管理员权限
@@ -267,7 +283,42 @@ public class CompetitionInfoController
         {
             matchInfoQueryVO.setCreateUserInfo(userWorkVO);
         }
-        return ResultUtils.success(matchInfoQueryVO);
+        MatchInfoProfileVO profileVO = new MatchInfoProfileVO();
+        BeanUtils.copyProperties(matchInfoQueryVO, profileVO);
+
+        HashMap<Long, List<Long>> matchPermissionRule = matchInfoQueryVO.getMatchPermissionRule();
+        HashMap<Long, HashMap<String, String>> finalMatchPermissionRule = new HashMap<>();
+        if (isPermissionCollege(matchPermissionRule))
+        {
+            for (Map.Entry<Long, List<Long>> entry : matchPermissionRule.entrySet())
+            {
+                // 取出专业id列表
+                List<Long> majorIds = entry.getValue();
+                // 取出对应学院id下的redis缓存数据
+                HashMap<String, String> departmentInfo = redisOperatorService.getHash(
+                        RedisConstant.ACADEMY_MAJOR,
+                        entry.getKey(),
+                        String.class, String.class);
+                HashMap<String, String> majorsMap = new HashMap<>();
+                log.info("departmentInfo: {}", departmentInfo);
+                // 循环majors
+                for (Long majorId : majorIds)
+                {
+                    if (departmentInfo.containsKey(majorId.toString())
+                            && departmentInfo.get(majorId.toString()) != null)
+                    {
+                        // 根据专业id取出专业名称，并且反序列化
+                        majorsMap.put(majorId.toString(), departmentInfo.get(majorId.toString()).replaceAll("^\"|\"$", ""));
+                    }
+                }
+
+                majorsMap.put("name", departmentInfo.get("_name").replaceAll("^\"|\"$", ""));
+                finalMatchPermissionRule.put(entry.getKey(), majorsMap);
+            }
+        }
+        profileVO.setMatchPermissionRule(finalMatchPermissionRule);
+        log.info("profileVO: {}", profileVO);
+        return ResultUtils.success(profileVO);
     }
 
 
@@ -407,5 +458,15 @@ public class CompetitionInfoController
         return collegeMajorMap;
     }
 
-
+    /**
+     * 判断是否是全学院可以参加的权限
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/24 02:55
+     */
+    private static boolean isPermissionCollege(HashMap<Long, List<Long>> permissionMap)
+    {
+        return !permissionMap.containsKey(ALL_COLLEGE_ID);
+    }
 }

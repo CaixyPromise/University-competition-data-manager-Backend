@@ -42,7 +42,6 @@ public interface UserFeignClient
     DepartAndMajorValidationResponse validateDepartmentsAndMajors(
             @RequestBody Map<Long, List<Long>> permissions);
 
-
     /**
      * 根据 id 获取用户
      *

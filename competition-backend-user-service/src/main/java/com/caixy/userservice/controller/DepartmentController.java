@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
  * @author: CAIXYPROMISE
  * @since: 2024-02-10 01:46
  **/
-// todo 实现基于学院的专业管理，考虑把他们的业务合并在一个控制器，逻辑写在service里
 @RestController
 @RequestMapping("/department")
 @Slf4j

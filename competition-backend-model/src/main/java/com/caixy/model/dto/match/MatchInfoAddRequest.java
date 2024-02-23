@@ -73,6 +73,7 @@ public class MatchInfoAddRequest implements Serializable
      * }
      */
     // 调整为嵌套列表以匹配前端结构
+    @NotEmpty
     private List<List<MatchPermission>> matchPermissionRule;
 
 

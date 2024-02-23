@@ -176,6 +176,33 @@ public class RedisOperatorService
         return stringRedisTemplate.opsForHash().entries(getFullKey(Enum, objectName));
     }
 
+
+    /**
+     * 获取hash数据，接受常量配置，并且根据类型回传对应类型的HashMap
+     *
+     * @param enumKey    key常量
+     * @param objectName key名称
+     * @param keyType    key类型
+     * @param valueType  value类型
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/24 00:16
+     */
+    public <K, V> HashMap<K, V> getHash(RedisConstant enumKey, Object objectName,
+                                        Class<K> keyType,
+                                        Class<V> valueType)
+    {
+        Map<Object, Object> rawMap = stringRedisTemplate.opsForHash().entries(getFullKey(enumKey, objectName));
+        HashMap<K, V> typedMap = new HashMap<>();
+        rawMap.forEach((rawKey, rawValue) ->
+        {
+            K key = keyType.cast(rawKey);
+            V value = valueType.cast(rawValue);
+            typedMap.put(key, value);
+        });
+        return typedMap;
+    }
+
     /**
      * 放入hash类型的数据 - Hash<String, Object> 接受来自常量的配置
      *

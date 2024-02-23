@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.entity.User;
+import com.caixy.model.vo.user.UserWorkVO;
 
 import java.util.List;
 
@@ -17,6 +18,8 @@ public interface UserMapper extends BaseMapper<User>
 {
     List<UserDepartmentMajorVO> getUserWithDepartmentMajor();
     Page<UserDepartmentMajorVO> listUserDetailsByPage(Page<UserDepartmentMajorVO> page);
+
+    UserWorkVO getUserWorkVO(long userId);
 }
 
 

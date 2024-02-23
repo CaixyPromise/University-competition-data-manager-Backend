@@ -59,4 +59,16 @@
     <select id="listUserDetailsByPage" resultType="com.caixy.model.vo.department.UserDepartmentMajorVO">
         <include refid="Base_User_Query" />
     </select>
+    <select id="getUserWorkVO" resultType="com.caixy.model.vo.user.UserWorkVO">
+        SELECT u.userName,
+               d.name AS userDepartment,
+               m.name AS userMajor,
+               u.userAccount AS userAccount,
+               u.userEmail AS userEmail
+        FROM user u
+             LEFT JOIN department_info d ON u.userDepartment = d.id
+             LEFT JOIN major_info m ON u.userMajor = m.id
+        WHERE u.isDelete = 0
+          AND u.id = #{userId}
+    </select>
 </mapper>

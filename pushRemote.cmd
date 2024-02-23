@@ -1,0 +1,1 @@
+git push gitee master:master && git push github master:main

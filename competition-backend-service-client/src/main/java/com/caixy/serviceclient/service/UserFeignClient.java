@@ -7,6 +7,7 @@ import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.user.UserVO;
+import com.caixy.model.vo.user.UserWorkVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,6 +52,10 @@ public interface UserFeignClient
     @GetMapping("/get/id")
     User getById(@RequestParam("userId") long userId);
 
+
+    @GetMapping("/get/id/vo")
+    UserWorkVO getUserWorkVO(@RequestParam("userId") long userId);
+
     /**
      * 根据 id 获取用户列表
      *
@@ -72,6 +77,26 @@ public interface UserFeignClient
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null)
+        {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        // 可以考虑在这里做全局权限校验
+        return currentUser;
+    }
+
+    /**
+     * 获取当前登录用户，如果需要检查登录且未登录则抛出异常
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/23 19:02
+     */
+    default User getLoginUser(HttpServletRequest request, boolean check)
+    {
+        // 先判断是否已登录
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        User currentUser = (User) userObj;
+        if (check && currentUser == null || currentUser.getId() == null)
         {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }

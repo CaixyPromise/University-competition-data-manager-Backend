@@ -44,3 +44,4 @@ derby.log
 
 ## 配置文件 ###
 **/application-dev.yml
+./pushRemote.cmd

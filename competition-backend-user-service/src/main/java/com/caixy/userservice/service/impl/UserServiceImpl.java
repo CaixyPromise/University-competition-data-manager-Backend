@@ -6,6 +6,7 @@ import com.caixy.common.constant.CommonConstant;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.enums.UserRoleEnum;
+import com.caixy.model.vo.user.UserWorkVO;
 import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -280,6 +281,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public Page<UserDepartmentMajorVO> listUserWithDepartmentMajor(long current, long size)
     {
         return this.baseMapper.listUserDetailsByPage(new Page<>(current, size));
+    }
+
+    @Override
+    public UserWorkVO getUserWorkVO(long userId)
+    {
+        return this.baseMapper.getUserWorkVO(userId);
     }
 
     // 私有方法，用于检查账户是否重复

@@ -29,6 +29,7 @@ import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.FileUploadBizEnum;
 import com.caixy.model.vo.match.MatchInfoQueryVO;
+import com.caixy.model.vo.user.UserWorkVO;
 import com.caixy.serviceclient.service.FileFeignClient;
 import com.caixy.serviceclient.service.UserFeignClient;
 import io.swagger.annotations.ApiImplicitParam;
@@ -81,7 +82,6 @@ public class CompetitionInfoController
     private static final Long LOG_MAX_SIZE = 5 * 1024 * 1024L;
 
     private static final byte[] JWT_TOKEN_KEY = "CAIXYPROMISE".getBytes();
-
 
     // region 增删改查
 
@@ -175,42 +175,8 @@ public class CompetitionInfoController
                 }
             }
         }
-//        File logoFile = null;
-//        String matchLogo = "";
-//        try
-//        {
-//            String fileName =
-//                    DigestUtil.md5Hex(RandomUtil.randomNumbers(3) + "-" + loginUser.getId() + "-" + UUID.randomUUID());
-//            String filePath = String.format("%s/%s", FileUploadBizEnum.COMPETITION_LOGO.getValue(), fileName);
-//            // 存在当前springboot工程里的资源文件夹内
-//            String tmpFilePath = String.format("%s/static/%s", System.getProperty("user.dir"), fileName);
-//            byte[] image = InnerFileUtils.checkBase64Image(postAddRequest.getMatchLogo(), LOG_MAX_SIZE);
-//            logoFile = InnerFileUtils.saveBase64ImageToFile(image, tmpFilePath);
-//            log.info("logoFile: {}", logoFile.getAbsolutePath());
-//            // 上传图片
-//            FileUploadInnerRequest uploadInnerRequest = new FileUploadInnerRequest();
-//            uploadInnerRequest.setKey(filePath);
-//            uploadInnerRequest.setLocalFilePath(logoFile.getAbsolutePath());
-//            Boolean result = fileService.uploadFile(uploadInnerRequest);
-//            if (!result)
-//            {
-//                throw new BusinessException(ErrorCode.OPERATION_ERROR, "上传图片失败");
-//            }
-//            matchLogo = FileConstant.COS_HOST + filePath;
-//        }
-//        catch (Exception e)
-//        {
-//            throw new BusinessException(ErrorCode.OPERATION_ERROR, e.getMessage());
-//        }
-//
 
-//        post.setMatchPic(matchLogo);
         log.info("entity: {}", post);
-
-//        entity.setMatchAward(JsonUtils.objectToString(postAddRequest.getMatchReward()));
-
-//        MatchInfo post = copyProperties(postAddRequest, loginUser.getId(), COPY_PROPERTIES_ADD);
-
         boolean result = matchInfoService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newMatchInfoId = post.getId();
@@ -256,7 +222,6 @@ public class CompetitionInfoController
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-//        MatchInfo post = new MatchInfo();
         MatchInfo post = copyProperties(postUpdateRequest, null, COPY_PROPERTIES_UPDATE);
         long id = postUpdateRequest.getId();
         // 判断是否存在
@@ -265,6 +230,46 @@ public class CompetitionInfoController
         boolean result = matchInfoService.updateById(post);
         return ResultUtils.success(result);
     }
+
+    /**
+     * 获取比赛信息，并且根据用户身份转VO;
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/23 19:05
+     */
+    @GetMapping("/get/profile")
+    public BaseResponse<MatchInfoQueryVO> getMatchInfo(@RequestParam(value = "id", required = true) Long id,
+                                                       HttpServletRequest request)
+    {
+        if (id == null || id <= 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 获取当前用户，可以不需要登录
+        User loginUser = userService.getLoginUser(request, false);
+        //  判断是否是管理员
+        boolean canAdmin = userService.isAdmin(loginUser);
+        MatchInfo matchInfo = matchInfoService.getById(id);
+        MatchInfoQueryVO matchInfoQueryVO = null;
+        // 没有管理员权限
+        if (!canAdmin)
+        {
+            matchInfoQueryVO = MatchInfoQueryVO.convertToPageVO(matchInfo);
+        }
+        else
+        {   // 有管理员权限
+            matchInfoQueryVO = MatchInfoQueryVO.convertToAdminVO(matchInfo);
+        }
+        // 获取创建人信息
+        UserWorkVO userWorkVO = userService.getUserWorkVO(matchInfo.getCreatedUser());
+        if (userWorkVO != null)
+        {
+            matchInfoQueryVO.setCreateUserInfo(userWorkVO);
+        }
+        return ResultUtils.success(matchInfoQueryVO);
+    }
+
 
     /**
      * 删除
@@ -332,7 +337,7 @@ public class CompetitionInfoController
         Page<MatchInfoQueryVO> voPage = new Page<>(current, size);
         voPage.setTotal(postPage.getTotal());
         List<MatchInfoQueryVO> voList =
-                postPage.getRecords().stream().map(MatchInfoQueryVO::convertToVO).collect(Collectors.toList());
+                postPage.getRecords().stream().map(MatchInfoQueryVO::convertToPageVO).collect(Collectors.toList());
         voPage.setRecords(voList);
         return ResultUtils.success(voPage);
     }
@@ -351,23 +356,6 @@ public class CompetitionInfoController
         {
             post.setCreatedUser(loginUserId);
         }
-
-        // 提取和验证权限规则
-//        Map<Long, List<Long>> permissions;
-//        if (sourceItem instanceof MatchInfoAddRequest)
-//        {
-//            permissions = ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule() != null ?
-//                          ((MatchInfoAddRequest) sourceItem).getMatchPermissionRule().getPermissions() : null;
-//        }
-//        else
-//        {
-//            permissions = ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule() != null ?
-//                          ((MatchInfoUpdateRequest) sourceItem).getMatchPermissionRule().getPermissions() : null;
-//        }
-//        validateAndProcessPermissions(permissions);
-//
-//        // 处理JSON格式的字段
-//        processJsonFields(sourceItem, post);
 
         return post;
     }

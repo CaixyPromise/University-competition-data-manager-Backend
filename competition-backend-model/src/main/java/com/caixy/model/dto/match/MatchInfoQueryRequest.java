@@ -21,5 +21,6 @@ public class MatchInfoQueryRequest extends PageRequest implements Serializable
      * 比赛名称
      */
     private String matchName;
+    private Long id;
     private static final long serialVersionUID = 1L;
 }

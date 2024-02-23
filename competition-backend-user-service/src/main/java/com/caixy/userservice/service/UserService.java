@@ -9,6 +9,7 @@ import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.user.LoginUserVO;
 import com.caixy.model.vo.user.UserVO;
+import com.caixy.model.vo.user.UserWorkVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -115,4 +116,6 @@ public interface UserService extends IService<User>
     Long makeRegister(User user);
 
     Page<UserDepartmentMajorVO> listUserWithDepartmentMajor(long current, long size);
+
+    UserWorkVO getUserWorkVO(long userId);
 }

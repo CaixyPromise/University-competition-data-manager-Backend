@@ -3,6 +3,7 @@ package com.caixy.model.vo.match;
 import com.caixy.common.utils.JsonUtils;
 import com.caixy.model.dto.match.properties.MatchAward;
 import com.caixy.model.entity.MatchInfo;
+import com.caixy.model.vo.user.UserWorkVO;
 import com.google.gson.reflect.TypeToken;
 import lombok.Data;
 
@@ -124,6 +125,11 @@ public class MatchInfoQueryVO implements Serializable
      */
     private Date signUpEndTime;
 
+    /**
+     * 比赛创建人信息
+     */
+    private UserWorkVO createUserInfo;
+
 
 
     public static MatchInfoQueryVO convertToAdminVO(MatchInfo matchInfo)
@@ -158,7 +164,7 @@ public class MatchInfoQueryVO implements Serializable
     }
 
 
-    public static MatchInfoQueryVO convertToVO(MatchInfo matchInfo)
+    public static MatchInfoQueryVO convertToPageVO(MatchInfo matchInfo)
     {
         MatchInfoQueryVO vo = new MatchInfoQueryVO();
         vo.setId(matchInfo.getId());
@@ -186,6 +192,14 @@ public class MatchInfoQueryVO implements Serializable
 
 //        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
 //        vo.setMatchAward(award);
+        return vo;
+    }
+
+    public static MatchInfoQueryVO convertToProfileVO(MatchInfo matchInfo)
+    {
+        MatchInfoQueryVO vo = convertToPageVO(matchInfo);
+        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
+        vo.setMatchAward(award);
         return vo;
     }
 

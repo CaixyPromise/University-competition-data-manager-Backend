@@ -2,6 +2,7 @@ package com.caixy.userservice.controller.inner;
 
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
+import com.caixy.model.vo.user.UserWorkVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import com.caixy.userservice.service.DepartmentInfoService;
 import com.caixy.userservice.service.UserService;
@@ -41,7 +42,6 @@ public class UserServiceInnerController implements UserFeignClient
             response.setIsValid(false);
             return response;
         }
-        log.info("接收到来自用户中心的请求，请求参数为：{}", permissions);
         // 提取所有的学院ID和专业ID
         Set<Long> departmentIds = permissions.keySet();
         Set<Long> majorIds = permissions.values().stream()
@@ -51,7 +51,6 @@ public class UserServiceInnerController implements UserFeignClient
         // 执行自定义查询
         List<Map<String, Object>> validationResults = departmentInfoService.validateDepartmentsAndMajors(
                 new ArrayList<>(departmentIds), new ArrayList<>(majorIds));
-        log.info("查询结果: {}", validationResults);
         // 检查查询结果是否覆盖了所有输入的ID
         Set<Long> validatedDepartmentIds = new HashSet<>();
         Set<Long> validatedMajorIds = new HashSet<>();
@@ -61,8 +60,6 @@ public class UserServiceInnerController implements UserFeignClient
             validatedDepartmentIds.add((Long) result.get("departmentId"));
             validatedMajorIds.add((Long) result.get("majorId"));
         }
-        log.info("验证结果: 学院ID: {}, 专业ID: {}", validatedDepartmentIds, validatedMajorIds);
-        log.info("输入的学院ID: {}, 专业ID: {}", departmentIds, majorIds);
         // 确保所有输入的学院ID和专业ID都在查询结果中
 
         response.setIsValid(departmentIds.equals(validatedDepartmentIds)
@@ -75,6 +72,13 @@ public class UserServiceInnerController implements UserFeignClient
     public User getById(@RequestParam long userId)
     {
         return userService.getById(userId);
+    }
+
+    @Override
+    @GetMapping("/get/id/vo")
+    public UserWorkVO getUserWorkVO(@RequestParam("userId") long userId)
+    {
+        return userService.getUserWorkVO(userId);
     }
 
     @Override

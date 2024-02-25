@@ -35,7 +35,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8071
+        server-addr: 127.0.0.1:8100
 
 mybatis-plus:
   configuration:

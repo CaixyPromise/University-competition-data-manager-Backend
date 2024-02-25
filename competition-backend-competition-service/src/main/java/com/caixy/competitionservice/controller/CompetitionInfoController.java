@@ -80,12 +80,9 @@ public class CompetitionInfoController
 
     private static final int COPY_PROPERTIES_UPDATE = 2;
 
-    private static final int TYPE_LENGTH = 20;
-
-    private static final int LEVEL_LENGTH = 20;
 
     // Logo图片限制最大大小：5mb
-    private static final Long LOG_MAX_SIZE = 5 * 1024 * 1024L;
+    private static final Long LOG_MAX_SIZE = 5L * 1024L * 1024L;
 
     /**
      * 允许全部学院参加比赛常量配置
@@ -144,6 +141,12 @@ public class CompetitionInfoController
         post.setEndTime(postAddRequest.getMatchDate().get(1));
         post.setMatchAward(JsonUtils.objectToString(postAddRequest.getMatchAward()));
         post.setCreatedUser(loginUser.getId());
+        post.setMatchGroup(JsonUtils.objectToString(postAddRequest.getGroupData()));
+        // 校验人数合法性
+        validateSizeList(postAddRequest.getTeacherSize());
+        validateSizeList(postAddRequest.getTeamSize());
+        post.setTeacherSize(JsonUtils.objectToString(postAddRequest.getTeacherSize()));
+        post.setTeamSize(JsonUtils.objectToString(postAddRequest.getTeamSize()));
 
         // 校验图片
         File imageFile = null;
@@ -283,6 +286,7 @@ public class CompetitionInfoController
         {
             matchInfoQueryVO.setCreateUserInfo(userWorkVO);
         }
+        log.info("matchInfoQueryVO:{}", matchInfoQueryVO);
         MatchInfoProfileVO profileVO = new MatchInfoProfileVO();
         BeanUtils.copyProperties(matchInfoQueryVO, profileVO);
 
@@ -410,6 +414,34 @@ public class CompetitionInfoController
 
         return post;
     }
+
+    /**
+     * 验证团队人数、指导老师人数size参数值
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/26 01:08
+     */
+    private void validateSizeList(List<Integer> sizeList)
+    {
+        // 长度只能为2
+        if (sizeList.size() != 2)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "size参数值不正确");
+        }
+        if (sizeList.get(0) > sizeList.get(1))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "最小值不能大于最小值");
+        }
+        for (Integer size : sizeList)
+        {
+            if (size < 1 || size > 100)
+            {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "size参数值不正确");
+            }
+        }
+    }
+
 
     private void validateAndProcessPermissions(HashMap<Long, List<Long>> permissions)
     {

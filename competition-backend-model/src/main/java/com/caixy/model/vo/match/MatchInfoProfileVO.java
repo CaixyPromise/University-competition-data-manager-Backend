@@ -1,6 +1,7 @@
 package com.caixy.model.vo.match;
 
 import com.caixy.common.utils.JsonUtils;
+import com.caixy.model.dto.match.properties.GroupDataItem;
 import com.caixy.model.dto.match.properties.MatchAward;
 import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.vo.user.UserWorkVO;
@@ -98,7 +99,14 @@ public class MatchInfoProfileVO implements Serializable
      * 最小团队人数
      */
     private Integer minTeamSize;
-
+    /**
+     * 最大团队指导老师人数
+     */
+    private Integer maxTeacherSize;
+    /**
+     * 最小团队指导老师人数
+     */
+    private Integer minTeacherSize;
     /**
      * 比赛开始时间
      */
@@ -123,6 +131,11 @@ public class MatchInfoProfileVO implements Serializable
      * 比赛创建人信息
      */
     private UserWorkVO createUserInfo;
+
+    /**
+     * 分组信息
+     */
+    private List<GroupDataItem> groupData;
 
     public static MatchInfoQueryVO convertToProfileVO(MatchInfo matchInfo)
     {

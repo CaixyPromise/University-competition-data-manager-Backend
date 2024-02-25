@@ -1,5 +1,6 @@
 package com.caixy.model.dto.match;
 
+import com.caixy.model.dto.match.properties.GroupDataItem;
 import com.caixy.model.dto.match.properties.MatchAward;
 import com.caixy.model.dto.match.properties.MatchPermission;
 import lombok.Data;
@@ -76,13 +77,20 @@ public class MatchInfoAddRequest implements Serializable
     @NotEmpty
     private List<List<MatchPermission>> matchPermissionRule;
 
+    @NotEmpty
+    @Size(max = 2, min = 2)
+    private List<Integer> teamSize; // [最小, 最大]
 
     @NotEmpty
-    @Size(max = 2)
+    @Size(max = 2, min = 2)
+    private List<Integer> teacherSize; // [最小, 最大]
+
+    @NotEmpty
+    @Size(max = 2, min = 2)
     private List<Date> signupDate; // [开始日期, 结束日期]
 
     @NotEmpty
-    @Size(max = 2)
+    @Size(max = 2, min = 2)
     private List<Date> matchDate; // [开始日期, 结束日期]
 
     /**
@@ -94,11 +102,6 @@ public class MatchInfoAddRequest implements Serializable
 
     /**
      * 比赛奖品 json
-     * expect:
-     * {
-     * "awardName_1": "awardDesc_1",
-     * "awardName_2": "awardDesc_2"
-     * }
      */
     @Size(min = 1, max = 100)
     private List<MatchAward> matchAward;
@@ -121,7 +124,11 @@ public class MatchInfoAddRequest implements Serializable
      */
     private List<String> fileList;
 
-
+    /**
+     * 比赛分组数据
+     */
+    @NotEmpty
+    private List<GroupDataItem> groupData;
 
 
     private static final long serialVersionUID = 1L;

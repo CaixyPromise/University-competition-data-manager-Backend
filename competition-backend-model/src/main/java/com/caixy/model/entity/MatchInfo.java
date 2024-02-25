@@ -63,7 +63,10 @@ public class MatchInfo implements Serializable
      * 比赛所允许的分组(学院/部门): 默认为全部学院/专业专业可以参加
      */
     private String matchPermissionRule;
-
+    /**
+     * 比赛分组
+     */
+    private String matchGroup;
     /**
      * 比赛标签
      */
@@ -85,14 +88,14 @@ public class MatchInfo implements Serializable
     private Long createdUser;
 
     /**
-     * 最大比赛团队大小
+     * 团队成员大小配置【最小, 最大】
      */
-    private Integer maxTeamSize;
+    private String teamSize;
 
     /**
-     * 最小团队人数
+     * 团队指导老师数量配置【最小, 最大】
      */
-    private Integer minTeamSize;
+    private String teacherSize;
 
     /**
      * 比赛报名开始时间

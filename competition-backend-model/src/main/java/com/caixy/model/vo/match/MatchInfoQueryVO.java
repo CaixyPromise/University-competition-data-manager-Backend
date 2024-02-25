@@ -1,6 +1,7 @@
 package com.caixy.model.vo.match;
 
 import com.caixy.common.utils.JsonUtils;
+import com.caixy.model.dto.match.properties.GroupDataItem;
 import com.caixy.model.dto.match.properties.MatchAward;
 import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.vo.user.UserWorkVO;
@@ -106,6 +107,16 @@ public class MatchInfoQueryVO implements Serializable
     private Integer minTeamSize;
 
     /**
+     * 最大团队指导老师人数
+     */
+
+    private Integer maxTeacherSize;
+    /**
+     * 最小团队指导老师人数
+     */
+    private Integer minTeacherSize;
+
+    /**
      * 比赛开始时间
      */
     private Date startTime;
@@ -130,20 +141,31 @@ public class MatchInfoQueryVO implements Serializable
      */
     private UserWorkVO createUserInfo;
 
+    /**
+     * 分组信息
+     */
+    private List<GroupDataItem> groupData;
 
-
+    /**
+     * 管理员专属vo信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/26 02:15
+     */
     public static MatchInfoQueryVO convertToAdminVO(MatchInfo matchInfo)
     {
         MatchInfoQueryVO vo = new MatchInfoQueryVO();
         vo.setId(matchInfo.getId());
         vo.setMatchName(matchInfo.getMatchName());
-//        vo.setMatchDesc(matchInfo.getMatchDesc());
+        vo.setMatchDesc(matchInfo.getMatchDesc());
         vo.setMatchStatus(matchInfo.getMatchStatus());
         vo.setMatchPic(matchInfo.getMatchPic());
         vo.setMatchType(matchInfo.getMatchType());
         vo.setMatchLevel(matchInfo.getMatchLevel());
         vo.setMatchRule(matchInfo.getMatchRule());
-//        vo.setTeamSize(matchInfo.getTeamSize());
+//        vo.setMaxTeamSize(matchInfo.getMaxTeamSize());
+//        vo.setMinTeamSize(matchInfo.getMinTeamSize());
         vo.setStartTime(matchInfo.getStartTime());
         vo.setEndTime(matchInfo.getEndTime());
         vo.setSignUpStartTime(matchInfo.getSignUpStartTime());
@@ -157,13 +179,29 @@ public class MatchInfoQueryVO implements Serializable
 
         List<String> tags = JsonUtils.jsonToList(matchInfo.getMatchTags());
         vo.setMatchTags(tags);
+        // Gson默认数字转Double，这边需要Double转Int
+        List<Double> teamSize = JsonUtils.jsonToList(matchInfo.getTeamSize());
+        vo.setMinTeamSize(teamSize.get(0).intValue());
+        vo.setMaxTeamSize(teamSize.get(1).intValue());
+        List<Double> teacherSize = JsonUtils.jsonToList(matchInfo.getTeacherSize());
+        vo.setMinTeacherSize(teacherSize.get(0).intValue());
+        vo.setMaxTeacherSize(teacherSize.get(1).intValue());
 
         List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
         vo.setMatchAward(award);
+        List<GroupDataItem> groupData = JsonUtils.jsonToObject(matchInfo.getMatchGroup(),
+                new TypeToken<List<GroupDataItem>>(){}.getType());
+        vo.setGroupData(groupData);
         return vo;
     }
 
-
+    /**
+     * 用于分页时的vo数据
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/26 02:10
+     */
     public static MatchInfoQueryVO convertToPageVO(MatchInfo matchInfo)
     {
         MatchInfoQueryVO vo = new MatchInfoQueryVO();
@@ -174,8 +212,6 @@ public class MatchInfoQueryVO implements Serializable
         vo.setMatchPic(matchInfo.getMatchPic());
         vo.setMatchType(matchInfo.getMatchType());
         vo.setMatchLevel(matchInfo.getMatchLevel());
-        vo.setMaxTeamSize(matchInfo.getMaxTeamSize());
-        vo.setMinTeamSize(matchInfo.getMinTeamSize());
         vo.setStartTime(matchInfo.getStartTime());
         vo.setEndTime(matchInfo.getEndTime());
         vo.setSignUpStartTime(matchInfo.getSignUpStartTime());
@@ -190,16 +226,31 @@ public class MatchInfoQueryVO implements Serializable
         List<String> tags = JsonUtils.jsonToList(matchInfo.getMatchTags());
         vo.setMatchTags(tags);
 
-//        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
-//        vo.setMatchAward(award);
+        List<Double> teamSize = JsonUtils.jsonToList(matchInfo.getTeamSize());
+        vo.setMinTeamSize(teamSize.get(0).intValue());
+        vo.setMaxTeamSize(teamSize.get(1).intValue());
+        List<Double> teacherSize = JsonUtils.jsonToList(matchInfo.getTeacherSize());
+        vo.setMinTeacherSize(teacherSize.get(0).intValue());
+        vo.setMaxTeacherSize(teacherSize.get(1).intValue());
+
         return vo;
     }
 
+    /**
+     * 比赛详情页的vo数据
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/26 02:10
+     */
     public static MatchInfoQueryVO convertToProfileVO(MatchInfo matchInfo)
     {
         MatchInfoQueryVO vo = convertToPageVO(matchInfo);
         List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
         vo.setMatchAward(award);
+        List<GroupDataItem> groupData = JsonUtils.jsonToObject(matchInfo.getMatchGroup(),
+                new TypeToken<List<GroupDataItem>>(){}.getType());
+        vo.setGroupData(groupData);
         return vo;
     }
 

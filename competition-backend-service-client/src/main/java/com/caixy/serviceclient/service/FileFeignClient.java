@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @Author: CAIXYPROMISE
  * @Date: 2024-02-20 16:45
  **/
-@FeignClient(name = "competition-backend-content-service", path = "/api/content/inner/file")
+@FeignClient(name = "competition-backend-content-service",
+            path = "/api/content/inner/file")
 public interface FileFeignClient
 {
     @PostMapping("/upload")

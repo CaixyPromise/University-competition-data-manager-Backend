@@ -1,28 +1,29 @@
 package com.caixy.userservice.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caixy.common.constant.CommonConstant;
-import com.caixy.model.vo.department.UserDepartmentMajorVO;
-import com.caixy.model.dto.user.UserLoginRequest;
-import com.caixy.model.enums.UserRoleEnum;
-import com.caixy.model.vo.user.UserWorkVO;
-import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caixy.common.common.ErrorCode;
+import com.caixy.common.constant.CommonConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.utils.EncryptionUtils;
 import com.caixy.common.utils.SqlUtils;
+import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
+import com.caixy.model.dto.user.UserSearchRequest;
 import com.caixy.model.entity.User;
-
+import com.caixy.model.enums.UserRoleEnum;
+import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.SearchUserVO;
 import com.caixy.model.vo.user.UserVO;
+import com.caixy.model.vo.user.UserWorkVO;
 import com.caixy.userservice.mapper.UserMapper;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -32,19 +33,28 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
-* @author CAIXYPROMISE
-* @description 针对表【user(用户)】的数据库操作Service实现
-* @createDate 2024-02-06 23:22:54
-*/
+ * @author CAIXYPROMISE
+ * @description 针对表【user(用户)】的数据库操作Service实现
+ * @createDate 2024-02-06 23:22:54
+ */
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-    implements UserService
+        implements UserService
 {
     /**
      * 盐值，混淆密码
      */
     public static final String SALT = "caixy";
+
+    @Override
+    public Boolean validateUserByIds(List<Long> userIds)
+    {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("userAccount", userIds);
+        return this.count(queryWrapper) > 0;
+    }
+
     @Override
     public long userRegister(String userAccount, String userPassword)
     {
@@ -287,6 +297,36 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public UserWorkVO getUserWorkVO(long userId)
     {
         return this.baseMapper.getUserWorkVO(userId);
+    }
+
+    @Override
+    public List<SearchUserVO> listSearchUserVO(UserSearchRequest payload)
+    {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+
+        // 根据用户姓名和学号模糊查询
+        // 使用嵌套SQL以实现(userName LIKE ? OR userAccount LIKE ?)的逻辑
+        if (StringUtils.isNotBlank(payload.getUseKeyword())) {
+            queryWrapper.and(wrapper ->
+                    wrapper.like("userName", payload.getUseKeyword())
+                            .or()
+                            .like("userAccount", payload.getUseKeyword())
+            );
+        }
+        // 查找老师 - 学生
+        if (StringUtils.isNotBlank(payload.getUserRole()))
+        {
+            queryWrapper.eq("userRole", payload.getUserRole());
+        }
+
+        // 筛选用户的学院/专业ID不在提供的列表中
+        if (payload.getUserPermissionIds() != null && !payload.getUserPermissionIds().isEmpty())
+        {
+            queryWrapper.notIn("userDepartment", payload.getUserPermissionIds());
+        }
+
+        List<User> userList = this.baseMapper.selectList(queryWrapper);
+        return userList.stream().map(SearchUserVO::EntityConvertToVO).collect(Collectors.toList());
     }
 
     // 私有方法，用于检查账户是否重复

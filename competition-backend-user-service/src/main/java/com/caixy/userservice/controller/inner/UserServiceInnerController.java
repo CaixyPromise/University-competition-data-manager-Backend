@@ -32,6 +32,13 @@ public class UserServiceInnerController implements UserFeignClient
     private DepartmentInfoService departmentInfoService;
 
     @Override
+    @PostMapping("/validate/users")
+    public Boolean validateUsers(@RequestBody List<Long> userIds)
+    {
+        return userService.validateUserByIds(userIds);
+    }
+
+    @Override
     @PostMapping("/validate/departments-and-majors")
     public DepartAndMajorValidationResponse validateDepartmentsAndMajors(@RequestBody
                                                                          Map<Long, List<Long>> permissions)

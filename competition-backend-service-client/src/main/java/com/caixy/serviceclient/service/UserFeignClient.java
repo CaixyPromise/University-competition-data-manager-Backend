@@ -27,9 +27,21 @@ import java.util.Map;
  * @author: CAIXYPROMISE
  * @since: 2024-02-07 00:16
  **/
-@FeignClient(name = "competition-backend-user-service", path = "/api/user/inner")
+@FeignClient(name = "competition-backend-user-service",
+            path = "/api/user/inner")
 public interface UserFeignClient
 {
+
+    /**
+     * 判断列表内的用户id是否合法且存在
+     *
+     * @author CAIXYPROMISE
+     * @since 2024/2/27 22:01
+     * @version 1.0
+     */
+
+    @PostMapping("/validate/users")
+    Boolean validateUsers(@RequestBody List<Long> userIds);
 
     /**
      * 批量查询学院与专业的是否合法

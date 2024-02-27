@@ -1,3 +1,47 @@
-# 应用服务 WEB 访问端口
-server.port=8080
+server:
+  address: 0.0.0.0
+  port: 8108
+  servlet:
+    context-path: /api/team
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
+spring:
+  application:
+    name: competition-backend-team-service
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  session:
+    store-type: redis
+    # 30 天过期
+    timeout: 2592000
+  #  配置数据源
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/competition
+    username: root
+    password: as123456789
+  redis:
+    database: 1
+    host: 192.168.59.226
+    port: 6379
+    timeout: 5000
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8100
 
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+knife4j:
+  enable: true

@@ -34,6 +34,11 @@ public class RedisOperatorService
     private static final Long REDIS_LOCK_EXPIRE = 5L;
     // 分布式锁最大重试次数
     private static final int MAX_RETRY_TIMES = 10;
+    /**
+     * 无限重试次数
+     */
+    public static final Long UNLIMITED_RETRY_TIMES = -1L;
+
     // 分布式锁重试间隔时间（毫秒）
     private static final Long RETRY_INTERVAL = 100L;
 
@@ -206,9 +211,7 @@ public class RedisOperatorService
     /**
      * 放入hash类型的数据 - Hash<String, Object> 接受来自常量的配置
      *
-     * @param key    redis-key
-     * @param data   数据
-     * @param expire 过期时间, 单位: 秒
+     * @param data 数据
      * @author CAIXYPROMISE
      * @version 1.0
      * @since 2023/12/20 2:16
@@ -335,29 +338,57 @@ public class RedisOperatorService
     /**
      * 尝试获取分布式锁
      *
-     * @param lockKey    锁的Key
-     * @param requestId  请求标识
-     * @param expireTime 过期时间
+     * @param lockKey   锁的Key
+     * @param requestId 请求标识
      * @return 是否获取成功
      */
-    public boolean tryGetDistributedLock(String lockKey, String requestId, Long expireTime)
+    public boolean tryGetDistributedLock(RedisConstant lockKey, String requestId, Long retryTime)
     {
-        for (int i = 0; i < MAX_RETRY_TIMES; i++)
+        return tryGetDistributedLock(lockKey.getKey(), requestId, lockKey.getExpire(), retryTime);
+    }
+
+    public boolean tryGetDistributedLock(String lockKey, String requestId, Long expireTime, Long retryTime)
+    {
+        long retry = retryTime == null ? MAX_RETRY_TIMES : retryTime;
+        if (retry < 0)
         {
-            Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(lockKey,
-                    requestId, expireTime, TimeUnit.SECONDS);
-            if (result != null && result)
+            while (true)
             {
-                return true;
+                if (getLock(lockKey, requestId, expireTime))
+                {
+                    return true;
+                }
             }
-            try
+        }
+        else
+        {
+            for (int i = 0; i < retry; i++)
             {
-                Thread.sleep(RETRY_INTERVAL);
+                if (getLock(lockKey, requestId, expireTime))
+                {
+                    return true;
+                }
             }
-            catch (InterruptedException e)
-            {
-                Thread.currentThread().interrupt();
-            }
+        }
+        return false;
+    }
+
+    private boolean getLock(String lockKey, String requestId, Long expireTime)
+    {
+        Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(
+                lockKey,
+                requestId, expireTime, TimeUnit.SECONDS);
+        if (result != null && result)
+        {
+            return true;
+        }
+        try
+        {
+            Thread.sleep(RETRY_INTERVAL);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
         }
         return false;
     }
@@ -378,6 +409,12 @@ public class RedisOperatorService
         return false;
     }
 
+    public boolean releaseDistributedLock(RedisConstant key, String requestId)
+    {
+        return releaseDistributedLock(key.getKey(), requestId);
+    }
+
+
     // endregion
     // region 排行榜实现
     // ===================== 排行榜实现 =====================
@@ -385,29 +422,28 @@ public class RedisOperatorService
     /**
      * 有序集合添加之前没有的元素
      *
-     * @param key   排行榜名称Key
      * @param value 元素值 排行榜value-Key
      * @param score 分数
      * @return 是否添加成功
      * @author CAIXYPROMISE
      * @since 2023-12-29
      */
-    public boolean zAdd(String key, Object value, double score)
+    public boolean zAdd(RedisConstant rankKey, Object value, double score)
     {
-        String lockKey = REDIS_INVOKE_RANK_LOCK_KEY + key + ":lock";
+        String lockKey = REDIS_INVOKE_RANK_LOCK_KEY + rankKey.getKey() + ":lock";
         String requestId = UUID.randomUUID().toString();
         try
         {
             // 尝试获取分布式锁
-            boolean isLocked = tryGetDistributedLock(lockKey, requestId, 10L);
+            boolean isLocked = tryGetDistributedLock(lockKey, requestId, rankKey.getExpire(), 10L);
             if (!isLocked)
             {
                 return false; // 无法获取锁，直接返回
             }
             // 检查排行榜大小，并可能移除最低分数的记录
-            manageRankSize(key);
+            manageRankSize(rankKey.getKey());
             // 添加新记录
-            return Boolean.TRUE.equals(stringRedisTemplate.opsForZSet().add(key, value.toString(), score));
+            return Boolean.TRUE.equals(stringRedisTemplate.opsForZSet().add(rankKey.getKey(), value.toString(), score));
         }
         finally
         {
@@ -424,7 +460,7 @@ public class RedisOperatorService
      * @param score 分数
      * @return 是否添加成功
      */
-    public boolean zAddMap(String key, HashMap<String, Object> map, double score)
+    public boolean zAddMap(RedisConstant key, HashMap<String, Object> map, double score)
     {
         String valueAsJson = JsonUtils.mapToString(map);
         return zAdd(key, valueAsJson, score);

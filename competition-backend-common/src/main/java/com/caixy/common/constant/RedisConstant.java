@@ -15,8 +15,10 @@ public enum RedisConstant
     ACADEMY_MAJOR("ACADEMY_MAJOR", 60L * 60L * 24L),
 
     // 全部学院对应专业的信息：信息列表
-    ALL_ACADEMY_MAJOR("ALL_ACADEMY_MAJOR",60L*60L*24L);
+    ALL_ACADEMY_MAJOR("ALL_ACADEMY_MAJOR",60L*60L*24L),
 
+    // 加入队伍锁配置
+    JOIN_TEAM_LOCK("JOIN_TEAM_LOCK", 5L);
 
     private final String key;
     private final Long expire;

@@ -1,48 +1,83 @@
 package com.caixy.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
+import java.io.Serializable;
+import java.util.Date;
+
 /**
- * 报名信息表
+ * 队伍信息表
+ *
  * @TableName team_info
  */
-@TableName(value ="team_info")
+@TableName(value = "team_info")
 @Data
-public class TeamInfo implements Serializable {
+public class TeamInfo implements Serializable
+{
     /**
-     * 报名id
+     * id
      */
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 报名的竞赛id
+     * 比赛id
      */
     private Long raceId;
 
     /**
-     * 报名信息-报名信息json
+     * 队长id
      */
-    private String signInfo;
+    private Long userId;
 
     /**
-     * 报名状态 1：待审核；2：报名成功；3：报名失败(审核失败)
+     * 队伍名称
+     */
+    private String name;
+
+    /**
+     * 描述
+     */
+    private String description;
+
+    /**
+     * 最大人数：创建时设置，避免满了还被申请加入
+     */
+    private Integer maxNum;
+
+    /**
+     * 团队报名大项的id
+     */
+    private Long categoryId;
+
+    /**
+     * 团队报名小项的id
+     */
+    private Long eventId;
+
+    /**
+     * 过期时间，为比赛报名结束时间
+     */
+    private Date expireTime;
+
+    /**
+     * 0 - 公开，1 - 私有，2 - 加密
+     */
+    private Integer isPublic;
+
+    /**
+     * 0 - 团队组建中; 1 - 报名成功; 2 - 已解散
      */
     private Integer status;
 
     /**
-     * 备注
+     * 密码
      */
-    private String remark;
+    private String password;
 
     /**
-     * 报名时间
+     * 创建时间
      */
     private Date createTime;
 
@@ -54,6 +89,7 @@ public class TeamInfo implements Serializable {
     /**
      * 是否删除
      */
+    @TableLogic
     private Integer isDelete;
 
     @TableField(exist = false)

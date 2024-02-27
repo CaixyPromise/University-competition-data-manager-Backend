@@ -3,7 +3,6 @@ package com.caixy.model.vo.user;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * 已登录用户视图（脱敏）
@@ -13,10 +12,9 @@ public class LoginUserVO implements Serializable
 {
 
     /**
-     * 用户 id
+     * 账号(用户学/工号)
      */
-    private Long id;
-
+    private String userAccount;
     /**
      * 用户昵称
      */
@@ -38,14 +36,14 @@ public class LoginUserVO implements Serializable
     private String userRole;
 
     /**
-     * 创建时间
+     * 用户部门/院系id(学院)
      */
-    private Date createTime;
+    private Long userDepartment;
 
     /**
-     * 更新时间
+     * 用户专业id
      */
-    private Date updateTime;
+    private Long userMajor;
 
     private static final long serialVersionUID = 1L;
 }

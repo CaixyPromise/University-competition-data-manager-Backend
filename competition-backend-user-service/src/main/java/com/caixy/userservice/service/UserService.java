@@ -3,11 +3,13 @@ package com.caixy.userservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.model.dto.user.UserSearchRequest;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.SearchUserVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.model.vo.user.UserWorkVO;
 
@@ -21,6 +23,14 @@ import java.util.List;
  */
 public interface UserService extends IService<User>
 {
+    /**
+     * 批量校验用户Account是否存在
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/27 22:02
+     */
+    Boolean validateUserByIds(List<Long> userIds);
 
     /**
      * 用户注册
@@ -118,4 +128,6 @@ public interface UserService extends IService<User>
     Page<UserDepartmentMajorVO> listUserWithDepartmentMajor(long current, long size);
 
     UserWorkVO getUserWorkVO(long userId);
+
+    List<SearchUserVO> listSearchUserVO(UserSearchRequest payload);
 }

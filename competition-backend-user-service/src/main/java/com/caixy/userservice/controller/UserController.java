@@ -7,13 +7,16 @@ import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.DeleteRequest;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
+import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.SearchUserVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +39,9 @@ public class UserController
 {
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisOperatorService redisOperatorService;
 
     // region 登录相关
 
@@ -242,8 +249,8 @@ public class UserController
      * 分页获取用户信息, 返回数据如下: {@link UserDepartmentMajorVO}
      *
      * @author CAIXYPROMISE
-     * @since 2024/2/10 01:23
      * @version 1.0
+     * @since 2024/2/10 01:23
      */
     @PostMapping("/list/page/all")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
@@ -276,7 +283,8 @@ public class UserController
         long size = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
-        List<User> userList = userPage.getRecords().stream().peek(user -> user.setUserPassword(null)).collect(Collectors.toList());
+        List<User> userList =
+                userPage.getRecords().stream().peek(user -> user.setUserPassword(null)).collect(Collectors.toList());
 
         userPage.setRecords(userList);
         return ResultUtils.success(userPage);
@@ -310,6 +318,30 @@ public class UserController
         List<UserVO> userVO = userService.getUserVO(userPage.getRecords());
         userVOPage.setRecords(userVO);
         return ResultUtils.success(userVOPage);
+    }
+    @PostMapping("/search/team/user")
+    public BaseResponse<List<SearchUserVO>> searchUserByUserNameAndAccount(@RequestBody UserSearchRequest payload,
+                                                                           HttpServletRequest request)
+    {
+        // 需要登录才可以查询
+        userService.getLoginUser(request);
+        if (payload == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        List<SearchUserVO> searchUserVOS = userService.listSearchUserVO(payload)
+                .stream().peek(searchUserVO ->
+                {
+                    HashMap<String, String> majorAndDepartMap =
+                            redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR,
+                                    searchUserVO.getUserDepartment(),
+                                    String.class, String.class);
+                    String departmentName = majorAndDepartMap.get("_name").replaceAll("^\"|\"$", "");
+                    String majorName = majorAndDepartMap.get(searchUserVO.getUserMajor()).replaceAll("^\"|\"$", "");
+                    searchUserVO.setUserDepartment(departmentName);
+                    searchUserVO.setUserMajor(majorName);
+                }).collect(Collectors.toList());
+        return ResultUtils.success(searchUserVOS);
     }
 
     // endregion

@@ -34,8 +34,19 @@
             <version>4.3.0</version>
         </dependency>
         <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.17.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.caixy</groupId>
             <artifactId>competition-backend-model</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.caixy</groupId>
+            <artifactId>competition-backend-service-client</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
@@ -69,7 +80,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.caixy.teamservice.CompetitionBackendTeamServiceApplication</mainClass>
+                    <mainClass>com.caixy.teamservice.TeamServiceApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>

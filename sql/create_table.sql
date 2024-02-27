@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS `major_info`
     createTime DATETIME default CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
     updateTime DATETIME default CURRENT_TIMESTAMP NOT NULL on update CURRENT_TIMESTAMP COMMENT '更新时间',
     isDelete   TINYINT  default 0                 NOT NULL COMMENT '是否删除',
-    index idx_name (name)
+    index idx_name (name),
+    index idx_depart_id (departId)
 ) COMMENT '专业信息表'
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_unicode_ci;
@@ -72,7 +73,7 @@ create table match_info
         primary key,
     matchName           varchar(80)                             not null comment '比赛名称',
     matchDesc           text                                    not null comment '比赛描述',
-    matchStatus         tinyint                                 not null comment '比赛状态',
+    matchStatus         tinyint                                 not null comment '比赛状态：0 - 报名准备中; 1 - 比赛报名中; 2 - 报名已结束; 3 - 比赛进行中; 4 - 比赛已结束',
     matchPic            varchar(1024)                           null comment '比赛宣传图片(logo)',
     matchType           varchar(20)                             not null comment '比赛类型: A类, B类, C类',
     matchLevel          varchar(20)                             not null comment '比赛等级: 国家级, 省级',
@@ -111,19 +112,39 @@ CREATE TABLE IF NOT EXISTS announce
 -- endregion
 
 -- region 团队信息
-CREATE TABLE IF NOT EXISTS team_info
+-- 队伍表
+create table team_info
 (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '报名id',
-    raceId     BIGINT                             NOT NULL COMMENT '报名的竞赛id',
-    leaderId   BIGINT                             NOT NULL COMMENT '队长id',
-    teamName   varchar(256)                       NOT NULL DEFAULT '' COMMENT '队伍名称',
-    signInfo   TEXT                               NOT NULL COMMENT '队员信息-报名信息json',
-    status     int(2)                             NOT NULL DEFAULT '1' COMMENT '报名状态 1：待审核；2：报名成功；3：报名失败(审核失败)',
-    remark     varchar(256)                       NOT NULL DEFAULT '' COMMENT '备注',
-    createTime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '报名时间',
-    updateTime DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    isDelete   TINYINT  DEFAULT 0                 NOT NULL COMMENT '是否删除'
-) COMMENT '(队伍)报名信息表'
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+    id          bigint auto_increment comment 'id' primary key,
+    raceId      bigint                             not null comment '比赛id',
+    name        varchar(256)                       not null comment '队伍名称',
+    description varchar(1024)                      null comment '描述',
+    maxNum      int      default 1                 not null comment '最大人数：创建时设置，避免满了还被申请加入',
+    userId      bigint                             not null comment '队长id',
+    isPublic    int      default 0                 not null comment '0 - 公开，1 - 私有，2 - 加密',
+    status      int      default 0                 not null comment '0 - 团队组建中; 1 - 报名成功; 2 - 已解散',
+    password    varchar(512)                       null comment '密码',
+    createTime  datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    updateTime  datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
+    isDelete    tinyint  default 0                 not null comment '是否删除',
+    index idx_raceId (raceId),
+    index idx_userId (userId)
+) comment '队伍信息表';
+
+-- endregion
+
+-- region 用户队伍关系表
+create table user_team
+(
+    id         bigint auto_increment comment 'id'
+        primary key,
+    userId     bigint comment '用户id',
+    teamId     bigint comment '队伍id',
+    joinTime   datetime default CURRENT_TIMESTAMP null comment '加入时间',
+    createTime datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    updateTime datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
+    isDelete   tinyint  default 0                 not null comment '是否删除',
+    index idx_userId (userId),
+    index idx_teamId (teamId)
+) comment '用户队伍关系';
 -- endregion

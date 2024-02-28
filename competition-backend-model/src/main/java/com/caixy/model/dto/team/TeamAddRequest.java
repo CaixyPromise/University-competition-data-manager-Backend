@@ -35,6 +35,8 @@ public class TeamAddRequest implements Serializable
      */
     private String teamName;
 
+    private List<String> teamTags;
+
     /**
      * 团队描述
      */

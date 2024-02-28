@@ -1,14 +1,16 @@
-package com.caixy.model.enums;
+package com.caixy.model.enums.team;
 
 /**
  * 队伍开放状态枚举
  *
- * @name: com.caixy.model.enums.TeamStatusEnum
+ * @name: com.caixy.model.enums.team.TeamStatusEnum
  * @author: CAIXYPROMISE
  * @since: 2024-02-26 15:35
  **/
 public enum TeamStatusEnum
 {
+    ISREGISTER(0,"已报名比赛"),
+
     PUBLIC(0,"公开"),
 
     PRIVATE(1,"私有"),

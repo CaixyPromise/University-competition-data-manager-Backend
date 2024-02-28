@@ -8,15 +8,15 @@ import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.model.dto.team.*;
-import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.entity.UserTeam;
+import com.caixy.model.vo.team.TeamInfoPageVO;
+import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.model.vo.team.TeamUserVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import com.caixy.teamservice.service.TeamInfoService;
 import com.caixy.teamservice.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -76,21 +76,6 @@ public class TeamController
         return ResultUtils.success(true);
     }
 
-    @GetMapping("/get")
-    public BaseResponse<TeamInfo> getTeamById(long id)
-    {
-        if (id <= 0)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        TeamInfo team = teamService.getById(id);
-        if (team == null)
-        {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "团队不存在");
-        }
-        return ResultUtils.success(team);
-    }
-
     @GetMapping("/list")
     public BaseResponse<List<TeamUserVO>> listTeams(TeamQuery teamQuery, HttpServletRequest request)
     {
@@ -134,18 +119,14 @@ public class TeamController
 
     // todo 查询分页
     @GetMapping("/list/page")
-    public BaseResponse<Page<TeamInfo>> listTeamsByPage(TeamQuery teamQuery)
+    public BaseResponse<Page<TeamInfoPageVO>> listTeamsByPage(TeamQuery teamQuery)
     {
         if (teamQuery == null)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        TeamInfo team = new TeamInfo();
-        BeanUtils.copyProperties(teamQuery, team);
-        Page<TeamInfo> page = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
-        QueryWrapper<TeamInfo> queryWrapper = new QueryWrapper<>(team);
-        Page<TeamInfo> resultPage = teamService.page(page, queryWrapper);
-        return ResultUtils.success(resultPage);
+
+        return ResultUtils.success(teamService.listByPage(teamQuery, true));
     }
 
     @PostMapping("/join")
@@ -243,5 +224,16 @@ public class TeamController
         teamQuery.setIdList(idList);
         List<TeamUserVO> teamList = teamService.listTeams(teamQuery, true);
         return ResultUtils.success(teamList);
+    }
+
+    @GetMapping("/get/info")
+    public BaseResponse<TeamInfoVO> getTeamById(@RequestParam("teamId") Long teamId, HttpServletRequest request)
+    {
+        if (teamId == null || teamId < 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍不存在");
+        }
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(teamService.getTeamInfoById(teamId, loginUser, true));
     }
 }

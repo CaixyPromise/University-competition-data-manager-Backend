@@ -1,9 +1,7 @@
 package com.caixy.model.vo.match;
 
-import com.caixy.common.utils.JsonUtils;
 import com.caixy.model.dto.match.properties.GroupDataItem;
 import com.caixy.model.dto.match.properties.MatchAward;
-import com.caixy.model.entity.MatchInfo;
 import com.caixy.model.vo.user.UserWorkVO;
 import lombok.Data;
 
@@ -71,22 +69,12 @@ public class MatchInfoProfileVO implements Serializable
 
     /**
      * 比赛标签 json
-     * expect:
-     * {
-     * "tagName_1": "tagDesc_1",
-     * "tagName_2": "tagDesc_2"
-     * }
      */
     private List<String> matchTags;
 
 
     /**
      * 比赛奖品 json
-     * expect:
-     * {
-     * "awardName_1": "awardDesc_1",
-     * "awardName_2": "awardDesc_2"
-     * }
      */
     private List<MatchAward> matchAward;
 
@@ -137,13 +125,6 @@ public class MatchInfoProfileVO implements Serializable
      */
     private List<GroupDataItem> groupData;
 
-    public static MatchInfoQueryVO convertToProfileVO(MatchInfo matchInfo)
-    {
-        MatchInfoQueryVO vo = MatchInfoQueryVO.convertToPageVO(matchInfo);
-        List<MatchAward> award = JsonUtils.jsonToList(matchInfo.getMatchAward());
-        vo.setMatchAward(award);
-        return vo;
-    }
 
     private static final long serialVersionUID = 1L;
 }

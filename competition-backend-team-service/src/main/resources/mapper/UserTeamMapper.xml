@@ -5,15 +5,15 @@
 <mapper namespace="com.caixy.teamservice.mapper.UserTeamMapper">
 
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.UserTeam">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="teamId" column="teamId" jdbcType="BIGINT"/>
-            <result property="raceId" column="raceId" jdbcType="BIGINT"/>
-            <result property="userRole" column="userRole" jdbcType="INTEGER"/>
-            <result property="joinTime" column="joinTime" jdbcType="TIMESTAMP"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="teamId" column="teamId" jdbcType="BIGINT"/>
+        <result property="raceId" column="raceId" jdbcType="BIGINT"/>
+        <result property="userRole" column="userRole" jdbcType="INTEGER"/>
+        <result property="joinTime" column="joinTime" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -21,4 +21,27 @@
         userRole,joinTime,createTime,
         updateTime,isDelete
     </sql>
+
+    <select id="checkUserInTeamOrRace" resultType="java.lang.Integer">
+        SELECT
+            CASE
+                WHEN COUNT(*) > 0 THEN 1
+                ELSE 0
+                END
+        FROM
+            user_team
+        WHERE
+            userId = #{userId}
+          AND raceId = #{raceId}
+          AND isDelete = 0
+          AND (
+                    teamId = #{teamId} OR
+                    (teamId != #{teamId} AND EXISTS (
+                        SELECT 1 FROM user_team ut
+                        WHERE ut.userId = #{userId} AND ut.raceId = #{raceId} AND ut.isDelete = 0
+                    ))
+            )
+    </select>
+
+
 </mapper>

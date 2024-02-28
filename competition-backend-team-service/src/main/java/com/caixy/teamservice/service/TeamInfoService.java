@@ -1,9 +1,12 @@
 package com.caixy.teamservice.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caixy.model.dto.team.*;
 import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
+import com.caixy.model.vo.team.TeamInfoPageVO;
+import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.model.vo.team.TeamUserVO;
 
 import java.util.List;
@@ -58,9 +61,6 @@ public interface TeamInfoService extends IService<TeamInfo>
      * @return
      */
     boolean quitTeam(TeamQuitRequest teamQuitRequest, User loginUser);
-
-    // [加入学习圈](https://t.zsxq.com/0emozsIJh) 从 0 到 1 项目实战，经验拉满！10+ 原创项目手把手教程、1000+ 项目经验笔记、7 日项目提升训练营、60+ 编程经验分享直播
-
     /**
      * 删除（解散）队伍
      *
@@ -69,4 +69,8 @@ public interface TeamInfoService extends IService<TeamInfo>
      * @return
      */
     boolean deleteTeam(long id, User loginUser);
+
+    Page<TeamInfoPageVO> listByPage(TeamQuery teamQuery, boolean isAdmin);
+
+    TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole);
 }

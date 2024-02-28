@@ -2,23 +2,31 @@ package com.caixy.teamservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.utils.EncryptionUtils;
+import com.caixy.common.utils.JsonUtils;
 import com.caixy.common.utils.RedisOperatorService;
+import com.caixy.model.dto.match.properties.GroupDataItem;
 import com.caixy.model.dto.team.*;
 import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.entity.UserTeam;
-import com.caixy.model.enums.TeamStatusEnum;
+import com.caixy.model.enums.team.TeamStatusEnum;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
+import com.caixy.model.vo.team.TeamInfoPageVO;
+import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.model.vo.team.TeamUserVO;
+import com.caixy.model.vo.user.UserTeamWorkVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.serviceclient.service.CompetitionFeignClient;
 import com.caixy.serviceclient.service.UserFeignClient;
+import com.caixy.model.enums.team.TeamRoleEnum;
 import com.caixy.teamservice.mapper.TeamInfoMapper;
+import com.caixy.teamservice.mapper.UserTeamMapper;
 import com.caixy.teamservice.service.TeamInfoService;
 import com.caixy.teamservice.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author CAIXYPROMISE
@@ -42,6 +52,9 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
 {
     @Resource
     private UserTeamService userTeamService;
+
+    @Resource
+    private UserTeamMapper userTeamMapper;
 
     @Resource
     private UserFeignClient userService;
@@ -146,34 +159,30 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         // 6. 插入队伍信息到队伍表
         log.info("teamInfo: {}", teamInfo);
         // 设置比赛id
+        teamInfo.setTeamTags(JsonUtils.objectToString(teamAddRequest.getTeamTags()));
         teamInfo.setRaceId(teamAddRequest.getMatchId());
         teamInfo.setCategoryId(Long.valueOf(teamAddRequest.getMatchCategoryId()));
         teamInfo.setEventId(Long.valueOf(teamAddRequest.getMatchEventId()));
         teamInfo.setExpireTime(matchInfo.getSignUpEndTime());
         teamInfo.setIsPublic(status == 1 ? 1 : 0);
 
-//        return 1;
         boolean result = this.save(teamInfo);
         Long teamId = teamInfo.getId();
         if (!result || teamId == null)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "创建队伍失败");
         }
-//        Long teamId = teamAddRequest.getId();
-//        if (!result || teamId == null)
-//        {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "创建队伍失败");
-//        }
-//        // 7. 插入用户  => 队伍关系到关系表
+
+        // 7. 插入用户  => 队伍关系到关系表
         List<UserTeam> userTeamList = new ArrayList<>();
         List<Long> userIds = new ArrayList<>();
-        userTeamList.add(UserTeam.createUser(teamId, raceId, userId, 0));
+        userTeamList.add(UserTeam.createUser(teamId, raceId, userId, TeamRoleEnum.LEADER.getCode()));
         if (!teammateLists.isEmpty())
         {
             for (Long teamUserId : teammateLists)
             {
                 userIds.add(teamUserId);
-                userTeamList.add(UserTeam.createUser(teamId, raceId, teamUserId, 1));
+                userTeamList.add(UserTeam.createUser(teamId, raceId, teamUserId, TeamRoleEnum.MEMBER.getCode()));
             }
         }
         if (!teachersLists.isEmpty())
@@ -181,9 +190,10 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             for (Long teacherId : teachersLists)
             {
                 userIds.add(teacherId);
-                userTeamList.add(UserTeam.createUser(teamId, raceId, teacherId, 2));
+                userTeamList.add(UserTeam.createUser(teamId, raceId, teacherId, TeamRoleEnum.TEACHER.getCode()));
             }
         }
+        // 校验用户是否存在
         Boolean allUserIsExist = userService.validateUsers(userIds);
         if (!allUserIsExist)
         {
@@ -335,10 +345,12 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         }
         Long teamId = teamJoinRequest.getTeamId();
         TeamInfo team = getTeamById(teamId);
-//        Date expireTime = team.getExpireTime();
-//        if (expireTime != null && expireTime.before(new Date())) {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍已过期");
-//        }
+        Date expireTime = team.getExpireTime();
+        if (expireTime != null && expireTime.before(new Date()))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍已过期");
+        }
+        // 检查状态，如果队伍是私密的，需要密码
         Integer status = team.getStatus();
         TeamStatusEnum teamStatusEnum = TeamStatusEnum.getEnumByValue(status);
         if (TeamStatusEnum.PRIVATE.equals(teamStatusEnum))
@@ -348,13 +360,25 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         String password = teamJoinRequest.getPassword();
         if (TeamStatusEnum.SECRET.equals(teamStatusEnum))
         {
-            if (StringUtils.isBlank(password) || !password.equals(team.getPassword()))
+            if (StringUtils.isBlank(password) || !EncryptionUtils.matches(password, team.getPassword()))
             {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
             }
         }
+        final Long matchId = teamJoinRequest.getTeamId();
+        if (matchId == null || matchId < 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛id不合法");
+        }
+        MatchInfoProfileVO matchInfoProfileVO = matchService.getMatchInfo(teamJoinRequest.getRaceId());
+        if (matchInfoProfileVO == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛不存在");
+        }
         // 该用户已加入的队伍数量
+        // 检查用户是否已经加入这个比赛的任何队伍
         long userId = loginUser.getId();
+
         // 只有一个线程能获取到锁
         if (redisOperatorService.tryGetDistributedLock(
                 RedisConstant.JOIN_TEAM_LOCK,
@@ -362,33 +386,41 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         {
             try
             {
-                // 抢到锁并执行{
-                System.out.println("getLock: " + Thread.currentThread().getId());
-                QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
-                userTeamQueryWrapper.eq("userId", userId);
-                long hasJoinNum = userTeamService.count(userTeamQueryWrapper);
-                if (hasJoinNum > 5)
+                // 抢到锁并执行
+                log.info("getLock: " + Thread.currentThread().getId());
+                // 检查有没有被限制参加比赛
+                HashMap<Long, HashMap<String, String>> matchPermissionRule =
+                        matchInfoProfileVO.getMatchPermissionRule();
+                if (matchPermissionRule != null)
                 {
-                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多创建和加入 5 个队伍");
+                    HashMap<String, String> departmentMap =
+                            matchPermissionRule.get(loginUser.getUserDepartment());
+                    if (departmentMap != null)
+                    {
+                        if (departmentMap.get(loginUser.getUserMajor().toString()) != null)
+                        {
+                            throw new BusinessException(ErrorCode.OPERATION_ERROR, "没有权限参加比赛，快去看看其他比赛吧~");
+                        }
+                    }
                 }
                 // 不能重复加入已加入的队伍
-                userTeamQueryWrapper = new QueryWrapper<>();
-                userTeamQueryWrapper.eq("userId", userId);
-                userTeamQueryWrapper.eq("teamId", teamId);
-                long hasUserJoinTeam = userTeamService.count(userTeamQueryWrapper);
-                if (hasUserJoinTeam > 0)
+                int isJoin = userTeamMapper.checkUserInTeamOrRace(userId, teamJoinRequest.getTeamId(), matchId);
+                if (isJoin > 0)
                 {
-                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户已加入该队伍");
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "您已经加入这个比赛的其他队伍啦！");
                 }
+
                 // 已加入队伍的人数
                 long teamHasJoinNum = this.countTeamUserByTeamId(teamId);
-                if (teamHasJoinNum >= team.getMaxNum())
+                if (teamHasJoinNum >= team.getMaxNum() || teamHasJoinNum >= matchInfoProfileVO.getMaxTeamSize())
                 {
-                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍已满");
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍人数已满或达到比赛要求上限");
                 }
                 // 修改队伍信息
                 UserTeam userTeam = new UserTeam();
                 userTeam.setUserId(userId);
+                userTeam.setRaceId(matchId);
+                userTeam.setUserRole(TeamRoleEnum.APPLY.getCode());
                 userTeam.setTeamId(teamId);
                 userTeam.setJoinTime(new Date());
                 return userTeamService.save(userTeam);
@@ -405,7 +437,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         }
         else
         {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "创建队伍失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "添加队伍失败");
         }
     }
 
@@ -477,7 +509,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         TeamInfo team = getTeamById(id);
         long teamId = team.getId();
         // 校验你是不是队伍的队长
-        if (team.getUserId() != loginUser.getId())
+        if (!Objects.equals(team.getUserId(), loginUser.getId()))
         {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "无访问权限");
         }
@@ -493,6 +525,119 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return this.removeById(teamId);
     }
 
+    @Override
+    public Page<TeamInfoPageVO> listByPage(TeamQuery teamQuery, boolean isAdmin)
+    {
+        TeamInfo team = new TeamInfo();
+        BeanUtils.copyProperties(teamQuery, team);
+        Page<TeamInfo> page = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
+        QueryWrapper<TeamInfo> queryWrapper = new QueryWrapper<>(team);
+        Page<TeamInfo> resultPage = this.page(page, queryWrapper);
+        // 如果查找的数据不是为空
+        if (resultPage.getRecords().isEmpty())
+        {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "信息为空");
+        }
+        final List<Long> matchIds =
+                resultPage.getRecords().stream().map(TeamInfo::getRaceId).collect(Collectors.toList());
+        final List<Long> teamIds = resultPage.getRecords().stream().map(TeamInfo::getId).collect(Collectors.toList());
+//        userTeamService.batchCount
+        if (matchIds.isEmpty())
+        {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取关联信息失败");
+        }
+        // 获取比赛信息
+        HashMap<Long, MatchInfoProfileVO> matchInfos = matchService.getMatchInfoByIds(matchIds);
+        // 获取队员信息
+
+        List<TeamInfoPageVO> teamInfoPageVOS = resultPage.getRecords().stream().flatMap(item ->
+        {
+            TeamInfoPageVO pageVO = new TeamInfoPageVO();
+            BeanUtils.copyProperties(item, pageVO);
+            MatchInfoProfileVO matchInfoProfileVO = matchInfos.get(item.getRaceId());
+            if (matchInfoProfileVO == null)
+            {
+                return Stream.empty();
+            }
+            pageVO.setRaceName(matchInfoProfileVO.getMatchName());
+            pageVO.setMaxNum(matchInfoProfileVO.getMaxTeamSize());
+            pageVO.setTeamTags(JsonUtils.jsonToList(item.getTeamTags()));
+            pageVO.setNeedPassword(item.getStatus().equals(2) && !item.getPassword().isEmpty());
+            if (item.getIsPublic().equals(0))
+            {
+                return Stream.empty();
+            }
+            if (!matchInfoProfileVO.getSignUpEndTime().after(new Date()))
+            {
+                return Stream.empty();
+            }
+            return Stream.of(pageVO);
+        }).collect(Collectors.toList());
+        Page<TeamInfoPageVO> result = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
+        result.setRecords(teamInfoPageVOS);
+        return result;
+    }
+
+
+    @Override
+    public TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole)
+    {
+        // 获取队伍信息，这里不需要判断为空，因为在查询中已经判断了，如果为空直接报错
+        TeamInfo teamById = getTeamById(teamId);
+        // 获取比赛信息
+        MatchInfoProfileVO matchInfo = matchService.getMatchInfo(teamById.getRaceId());
+        if (matchInfo == null)
+        {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "关联比赛信息不存在");
+        }
+        // 根据团队找成员信息
+        List<UserTeamWorkVO> userTeamWorkVO = baseMapper.selectUserWorkVOByTeamId(teamId);
+        if (userTeamWorkVO == null || userTeamWorkVO.isEmpty())
+        {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "成员信息不存在");
+        }
+        // 根据userRole分类出队员信息
+        HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap = new HashMap<>(userTeamWorkVO.stream().collect(Collectors.groupingBy(UserTeamWorkVO::getTeamUserRole)));
+        TeamInfoVO teamInfoVO = assembleTeamInfoVO(teamById, matchInfo, groupByUserMap);
+        // 获取当前用户是否是队长，在申请状态，或是成员（普通队员或指导老师都是成员）
+        if (needRole)
+        {
+            setUserRoleInfo(teamInfoVO, groupByUserMap, loginUser);
+        }
+        return teamInfoVO;
+    }
+
+    private MatchGroupPair getCategoryAndEventName(Long categoryId, Long eventId, MatchInfoProfileVO matchInfoProfileVO)
+    {
+        HashMap<Long, String> idsToNames = new HashMap<>();
+        GroupDataItem.buildIdToParentGroupNameMap(matchInfoProfileVO.getGroupData(), null, idsToNames);
+
+        String categoryName = idsToNames.get(categoryId);
+        String eventName = idsToNames.get(eventId);
+
+        return new MatchGroupPair(categoryName, eventName);
+    }
+
+    private List<UserTeam> getApplyUser(Long teamId, Long raceId)
+    {
+        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("teamId", teamId);
+        queryWrapper.eq("raceId", raceId);
+        queryWrapper.eq("userRole", TeamRoleEnum.APPLY.getCode());
+        return userTeamMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 判断是否需要密码
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/28 22:00
+     */
+    private boolean isNeedPassword(TeamInfo item)
+    {
+        return item.getStatus().equals(2) && !item.getPassword().isEmpty();
+    }
 
     /**
      * 根据 id 获取队伍信息
@@ -526,6 +671,82 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         userTeamQueryWrapper.eq("teamId", teamId);
         return userTeamService.count(userTeamQueryWrapper);
     }
+
+    private static class MatchGroupPair
+    {
+        public String categoryName;
+        public String eventName;
+
+        MatchGroupPair(String categoryName, String eventName)
+        {
+            this.categoryName = categoryName;
+            this.eventName = eventName;
+        }
+    }
+
+    private TeamInfoVO assembleTeamInfoVO(TeamInfo teamInfo, MatchInfoProfileVO matchInfo, HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap)
+    {
+        TeamInfoVO teamInfoVO = new TeamInfoVO();
+        teamInfoVO.setTeamDesc(teamInfo.getDescription());
+        teamInfoVO.setRaceId(teamInfo.getRaceId().toString());
+        teamInfoVO.setTeamName(teamInfo.getName());
+        teamInfoVO.setTeamId(teamInfo.getId().toString());
+        teamInfoVO.setRaceName(matchInfo.getMatchName());
+        teamInfoVO.setTeamTags(JsonUtils.jsonToList(teamInfo.getTeamTags()));
+        teamInfoVO.setTeamMaxNum(teamInfo.getMaxNum());
+        teamInfoVO.setTeamCurrentNum(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()).size());
+        teamInfoVO.setRaceMaxNum(matchInfo.getMaxTeamSize());
+        teamInfoVO.setRaceMinNum(matchInfo.getMinTeamSize());
+        teamInfoVO.setNeedPassword(isNeedPassword(teamInfo));
+        teamInfoVO.setTeacherList(groupByUserMap.get(TeamRoleEnum.TEACHER.getCode()));
+        teamInfoVO.setUserList(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()));
+        teamInfoVO.setLeaderInfo(groupByUserMap.get(TeamRoleEnum.LEADER.getCode()).get(0));
+        MatchGroupPair matchGroupPair =
+                getCategoryAndEventName(teamInfo.getCategoryId(), teamInfo.getEventId(), matchInfo);
+        teamInfoVO.setCategoryName(matchGroupPair.categoryName);
+        teamInfoVO.setEventName(matchGroupPair.eventName);
+        teamInfoVO.setSignUpEndTime(matchInfo.getSignUpEndTime());
+        teamInfoVO.setMatchLevel(matchInfo.getMatchLevel());
+        teamInfoVO.setMatchType(matchInfo.getMatchType());
+        return teamInfoVO;
+    }
+
+    private void setUserRoleInfo(TeamInfoVO teamInfoVO, HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap, User loginUser)
+    {
+        UserTeamWorkVO leaderVO = groupByUserMap.get(TeamRoleEnum.LEADER.getCode()).get(0);
+        if (leaderVO.getUserAccount().equals(loginUser.getUserAccount()))
+        {
+            teamInfoVO.setIsLeader(true);
+            teamInfoVO.setApplyList(groupByUserMap.get(TeamRoleEnum.APPLY.getCode()));
+            teamInfoVO.setIsMember(false);
+            teamInfoVO.setIsApply(false);
+            return;
+        }
+        boolean isApply = groupByUserMap.get(TeamRoleEnum.APPLY.getCode())
+                .stream()
+                .anyMatch(vo -> vo.getUserAccount().equals(loginUser.getUserAccount()));
+        if (isApply)
+        {
+            teamInfoVO.setIsApply(true);
+            teamInfoVO.setIsLeader(false);
+            teamInfoVO.setIsMember(false);
+            return;
+        }
+
+        boolean isMember =
+                Stream.of(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()),
+                                            groupByUserMap.get(TeamRoleEnum.TEACHER.getCode())
+                        )
+                    .flatMap(Collection::stream)
+                    .anyMatch(vo -> vo.getUserAccount().equals(loginUser.getUserAccount()));
+        if (isMember)
+        {
+            teamInfoVO.setIsMember(true);
+            teamInfoVO.setIsLeader(false);
+            teamInfoVO.setIsApply(false);
+        }
+    }
+
 }
 
 

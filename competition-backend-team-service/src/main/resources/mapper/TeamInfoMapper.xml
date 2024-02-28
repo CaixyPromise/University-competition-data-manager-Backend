@@ -10,6 +10,8 @@
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="description" column="description" jdbcType="VARCHAR"/>
+        <result property="teamTags" column="teamTags" jdbcType="VARCHAR"/>
+
             <result property="maxNum" column="maxNum" jdbcType="INTEGER"/>
             <result property="categoryId" column="categoryId" jdbcType="BIGINT"/>
             <result property="eventId" column="eventId" jdbcType="BIGINT"/>
@@ -24,9 +26,41 @@
 
     <sql id="Base_Column_List">
         id,raceId,userId,
-        name,description,maxNum,
+        name,description,teamTags,maxNum,
         categoryId,eventId,expireTime,
         isPublic,status,password,
         createTime,updateTime,isDelete
     </sql>
+
+    <resultMap id="UserWorkVOResultMap" type="com.caixy.model.vo.user.UserTeamWorkVO">
+        <result property="userName" column="userName"/>
+        <result property="userDepartment" column="userDepartment"/>
+        <result property="userMajor" column="userMajor"/>
+        <result property="userAccount" column="userAccount"/>
+        <result property="userEmail" column="userEmail"/>
+        <result property="teamId" column="teamId"/>
+        <result property="teamUserRole" column="userRole"/>
+    </resultMap>
+
+    <select id="listUserWorkVOByTeamIds" resultMap="UserWorkVOResultMap">
+        SELECT
+        u.userName,
+        d.name AS userDepartment,
+        m.name AS userMajor,
+        u.userAccount AS userAccount,
+        u.userEmail AS userEmail,
+        ut.teamId AS teamId,
+        ut.userRole AS userRole
+        FROM
+        user_team ut
+        INNER JOIN user u ON ut.userId = u.id
+        LEFT JOIN department_info d ON u.userDepartment = d.id
+        LEFT JOIN major_info m ON u.userMajor = m.id
+        WHERE
+        ut.teamId IN
+        <foreach item="teamId" collection="teamIds" open="(" separator="," close=")">
+            #{teamId}
+        </foreach>
+        AND u.isDelete = 0
+    </select>
 </mapper>

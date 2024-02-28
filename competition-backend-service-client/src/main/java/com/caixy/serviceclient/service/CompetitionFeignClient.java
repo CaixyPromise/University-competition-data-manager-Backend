@@ -3,7 +3,12 @@ package com.caixy.serviceclient.service;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Name: com.caixy.serviceclient.service.CompetitionFeignClient
@@ -17,4 +22,7 @@ public interface CompetitionFeignClient
 {
     @GetMapping("/get")
     MatchInfoProfileVO getMatchInfo(@RequestParam("matchId") Long matchId);
+
+    @PostMapping("/get/nameByIds")
+    HashMap<Long, MatchInfoProfileVO> getMatchInfoByIds(@RequestBody List<Long> Ids);
 }

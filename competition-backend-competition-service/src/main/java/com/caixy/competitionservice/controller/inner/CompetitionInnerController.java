@@ -4,12 +4,13 @@ import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
 import com.caixy.serviceclient.service.CompetitionFeignClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 比赛信息远程调用接口控制器实现
@@ -36,5 +37,25 @@ public class CompetitionInnerController implements CompetitionFeignClient
         }
         log.info("获取比赛信息，matchId:{}", matchId);
         return matchInfoService.getMatchInfo(matchId, true);
+    }
+
+    /**
+     * 批量根据id获取比赛信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/28 01:59
+     */
+    @Override
+    @PostMapping("/get/nameByIds")
+    public HashMap<Long, MatchInfoProfileVO> getMatchInfoByIds(@RequestBody List<Long> Ids)
+    {
+        List<MatchInfoProfileVO> profileVOList = matchInfoService.getMatchInfoByIds(Ids, true);
+        Map<Long, MatchInfoProfileVO> matchInfoMap = profileVOList.stream()
+                .collect(Collectors.toMap(
+                        MatchInfoProfileVO::getId, // 假设MatchInfoProfileVO有getId方法
+                        profileVO -> profileVO,
+                        (existingValue, newValue) -> existingValue)); // 如果有重复的ID，保留现有的值;
+        return new HashMap<>(matchInfoMap);
     }
 }

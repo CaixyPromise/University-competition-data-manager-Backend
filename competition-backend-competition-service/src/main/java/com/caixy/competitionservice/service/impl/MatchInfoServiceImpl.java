@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author CAIXYPROMISE
@@ -177,6 +178,26 @@ public class MatchInfoServiceImpl extends ServiceImpl<MatchInfoMapper, MatchInfo
     {
         log.info("[getMatchInfo] 获取比赛详细信息接口，matchId: {}, canAdmin: {}", matchId, canAdmin);
         MatchInfo matchInfo = this.getById(matchId);
+        return getMatchInfoProfileVO(matchInfo, canAdmin);
+    }
+
+    /**
+     * 批量根据id获取比赛信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/28 02:04
+     */
+    @Override
+    public List<MatchInfoProfileVO> getMatchInfoByIds(List<Long> matchIds, boolean canAdmin)
+    {
+        List<MatchInfo> matchInfoList = this.listByIds(matchIds);
+        return matchInfoList.stream().map(matchInfo -> getMatchInfoProfileVO(matchInfo, canAdmin)).collect(Collectors.toList());
+    }
+
+
+    private MatchInfoProfileVO getMatchInfoProfileVO(MatchInfo matchInfo, boolean canAdmin)
+    {
         MatchInfoQueryVO matchInfoQueryVO = null;
         // 没有管理员权限
         if (!canAdmin)

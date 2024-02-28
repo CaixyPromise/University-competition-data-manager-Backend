@@ -5,20 +5,21 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 用户专业+学院工作信息
+ * 用户在团队内的信息VO
  *
- * @name: com.caixy.model.vo.user.UserWorkVO
+ * @name: com.caixy.model.vo.user.UserTeamWorkVO
  * @author: CAIXYPROMISE
- * @since: 2024-02-23 21:53
+ * @since: 2024-02-28 17:58
  **/
 @Data
-public class UserWorkVO implements Serializable
+public class UserTeamWorkVO implements Serializable
 {
     String userDepartment;
     String userMajor;
     String userName;
     String userAccount;
     String userEmail;
-
+    String teamId;
+    Integer teamUserRole;
     private static final long serialVersionUID = 1L;
 }

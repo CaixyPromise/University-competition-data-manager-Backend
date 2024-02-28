@@ -28,9 +28,6 @@ public class TeamUserVO implements Serializable
      * 队伍名称
      */
     private String name;
-
-    // 作_者 【程序员_鱼皮】 https://space.bilibili.com/12890453/
-
     /**
      * 描述
      */

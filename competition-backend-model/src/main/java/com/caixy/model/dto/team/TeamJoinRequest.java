@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class TeamJoinRequest implements Serializable
 {
 
-    private static final long serialVersionUID = 3191241716373120793L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * id
@@ -26,4 +26,9 @@ public class TeamJoinRequest implements Serializable
      * 密码
      */
     private String password;
+
+    /**
+     * 比赛id
+     */
+    private Long raceId;
 }

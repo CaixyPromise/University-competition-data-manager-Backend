@@ -42,9 +42,15 @@ public class TeamInfo implements Serializable
     private String description;
 
     /**
+     * 团队标签
+     */
+    private String teamTags;
+
+    /**
      * 最大人数：创建时设置，避免满了还被申请加入
      */
     private Integer maxNum;
+
 
     /**
      * 团队报名大项的id
@@ -60,6 +66,9 @@ public class TeamInfo implements Serializable
      * 过期时间，为比赛报名结束时间
      */
     private Date expireTime;
+
+
+
 
     /**
      * 0 - 公开，1 - 私有，2 - 加密

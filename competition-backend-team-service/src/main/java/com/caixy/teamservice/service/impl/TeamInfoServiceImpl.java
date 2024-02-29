@@ -97,7 +97,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         boolean isJoin = userTeamService.checkIsJoin(userId, raceId);
         if (isJoin)
         {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您已经创建过或是已经存在队伍啦~");
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您已经创建过或是已经加入过这个比赛的队伍啦~");
         }
         TeamInfo teamInfo = new TeamInfo();
         teamInfo.setUserId(userId); // 设置队长id
@@ -343,6 +343,13 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return this.updateById(updateTeam);
     }
 
+    /**
+     * 用户加入队伍：发起申请加入
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/3/1 01:58
+     */
     @Override
     public boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser)
     {
@@ -350,7 +357,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Long teamId = teamJoinRequest.getTeamId();
+        final Long teamId = teamJoinRequest.getTeamId();
         TeamInfo team = getTeamById(teamId);
         Date expireTime = team.getExpireTime();
         if (expireTime != null && expireTime.before(new Date()))
@@ -389,21 +396,9 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 log.info("getLock: " + Thread.currentThread().getId());
                 checkPermission(matchInfoProfileVO, loginUser);
 
-                // 不能重复加入已加入的队伍
-                List<UserTeam> isJoinList =
-                        userTeamMapper.checkUserInTeamOrRace(userId, teamJoinRequest.getTeamId(), matchId);
-                if (!isJoinList.isEmpty())
-                {
-                    boolean canJoin = isJoinList.stream().anyMatch(userTeam ->
-                            userTeam.getRaceId().equals(matchId) &&
-                                    (TeamRoleEnum.REJECT.getCode().equals(userTeam.getUserRole()) ||
-                                            TeamRoleEnum.APPLYING.getCode().equals(userTeam.getUserRole()))
-                    );
-                    if (!canJoin)
-                    {
-                        throw new BusinessException(ErrorCode.PARAMS_ERROR, "您已经加入这个比赛的其他队伍啦！");
-                    }
-                }
+                // 不能重复加入已加入的队伍，
+                // 检查用户是否已经加入这个队伍
+                checkUserIsJoinTeam(userId, teamId, team.getRaceId());
 
                 // 已加入队伍的人数
                 long teamHasJoinNum = this.countTeamUserByTeamId(teamId);
@@ -592,7 +587,10 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
      * @since 2024/2/29 20:28
      */
     @Override
-    public TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole)
+    public TeamInfoVO getTeamInfoById(Long teamId,
+                                      User loginUser,
+                                      boolean needRole,
+                                      boolean needLeaderId)
     {
         // 获取队伍信息，这里不需要判断为空，因为在查询中已经判断了，如果为空直接报错
         TeamInfo teamById = getTeamById(teamId);
@@ -616,6 +614,11 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         if (needRole)
         {
             setUserRoleInfo(teamInfoVO, groupByUserMap, loginUser);
+        }
+        // 只有在内部接口调用时才会给值，通常用于检查是否是队长本人进行操作
+        if (needLeaderId)
+        {
+            teamInfoVO.setLeaderId(teamById.getUserId());
         }
         return teamInfoVO;
     }
@@ -656,15 +659,21 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
     @Override
     public boolean makeRegister(Long teamId)
     {
-        if (teamId== null)
+        if (teamId == null)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍id不能为空");
         }
+        TeamInfo teamInfo = this.getById(teamId);
+        if (teamInfo == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍不存在");
+        }
+
         UpdateWrapper<TeamInfo> updateWrapper = new UpdateWrapper<>();
         updateWrapper.set("status", TeamStatusEnum.REGISTED.getValue())
                 .set("isPublic", 0)
                 .eq("id", teamId);
-        return this.update( updateWrapper);
+        return this.update(updateWrapper);
     }
 
 
@@ -714,17 +723,23 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 queryWrapper.eq("teamId", teamId);
                 queryWrapper.eq("userId", tagetUser.getId());
                 UserTeam applyUser = userTeamMapper.selectOne(queryWrapper);
+                // 检查是否存在申请记录
                 if (applyUser == null)
                 {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "没有申请加入该队伍");
                 }
-                if (applyUser.getUserRole().equals(TeamRoleEnum.REJECT.getCode()))
+
+                // 根据用户角色进行判断
+                Integer userRole = applyUser.getUserRole();
+                if (userRole.equals(TeamRoleEnum.REJECT.getCode()))
                 {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "申请被拒绝，无法再次申请");
                 }
-                if (!applyUser.getUserRole().equals(TeamRoleEnum.APPLYING.getCode()))
+                else if (!userRole.equals(TeamRoleEnum.APPLYING.getCode())
+                        || userRole >= 0)
                 {
-                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "已经加入该队伍");
+                    // 不是申请中状态或者角色码为非负数，都视为已经在队伍中
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "已经申请加入该队伍或已在队伍中");
                 }
                 // 已加入队伍的人数
                 long teamHasJoinNum = this.countTeamUserByTeamId(teamId);
@@ -931,6 +946,24 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 {
                     throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有权限参加比赛，快去看看其他比赛吧~");
                 }
+            }
+        }
+    }
+
+    private void checkUserIsJoinTeam(Long userId, Long teamId, Long raceId)
+    {
+        List<UserTeam> isJoinList =
+                userTeamMapper.checkUserInTeamOrRace(userId, teamId, raceId);
+        if (!isJoinList.isEmpty())
+        {
+            boolean canJoin = isJoinList.stream().anyMatch(userTeam ->
+                    userTeam.getRaceId().equals(raceId) &&
+                            (TeamRoleEnum.REJECT.getCode().equals(userTeam.getUserRole()) ||
+                                    TeamRoleEnum.APPLYING.getCode().equals(userTeam.getUserRole()))
+            );
+            if (!canJoin)
+            {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "您已经加入这个比赛的其他队伍啦！");
             }
         }
     }

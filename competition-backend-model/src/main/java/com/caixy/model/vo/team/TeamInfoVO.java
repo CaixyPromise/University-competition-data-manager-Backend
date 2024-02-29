@@ -34,6 +34,10 @@ public class TeamInfoVO implements Serializable
      */
     private String raceName;
     /**
+     * 队长id：只有在内部调用时才会有值
+     */
+    private Long leaderId;
+    /**
      * 队长信息
      */
     private UserTeamWorkVO leaderInfo;

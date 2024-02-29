@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface TeamInfoFeignClient
 {
     /**
-     * 根据团队id获取团队信息
+     * 根据团队id获取团队完整信息信息
      *
      * @author CAIXYPROMISE
      * @version 1.0
      * @since 2024/2/29 17:31
      */
     @GetMapping("/getById")
-    TeamInfoVO getTeamInfoById(@RequestParam("teamId") Long teamId);
+    TeamInfoVO getTeamProfileInfoById(@RequestParam("teamId") Long teamId);
 
     /**
      * 报名端调用该接口，实现报名

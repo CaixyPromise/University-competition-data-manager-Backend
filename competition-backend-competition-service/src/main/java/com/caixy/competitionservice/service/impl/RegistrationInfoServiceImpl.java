@@ -49,7 +49,6 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
         final Long teamId = registrationRaceRequest.getTeamId();
         final Long raceId = registrationRaceRequest.getRaceId();
         // 获取比赛信息
-
         MatchInfoProfileVO matchInfo = matchInfoService.getMatchInfo(raceId, true);
         ThrowUtils.throwIf(matchInfo == null, ErrorCode.PARAMS_ERROR, "比赛不存在");
         // 判断比赛的状态
@@ -62,18 +61,26 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛不在报名时间内");
         }
         // 获取团队信息
-        TeamInfoVO teamInfoById = teamInfoFeignClient.getTeamInfoById(teamId);
+        TeamInfoVO teamInfoById = teamInfoFeignClient.getTeamProfileInfoById(teamId);
         ThrowUtils.throwIf(teamInfoById == null, ErrorCode.PARAMS_ERROR, "团队不存在");
+        // 只有队长才能报名
+        if (!teamInfoById.getLeaderId().equals(loginUser.getId()))
+        {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "只有队长才能报名");
+        }
+        // 检查参赛人数是否达到比赛要求上限
+        checkTeamSize(matchInfo, teamInfoById);
+
         // 查找是否已经报过名
         QueryWrapper<RegistrationInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("teamId",  teamId);
+        queryWrapper.eq("teamId", teamId);
         queryWrapper.eq("raceId", raceId);
         long isRegistered = this.count(queryWrapper);
         if (isRegistered > 0)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "已经报过名了");
         }
-        // 不需要再做权限校验，因为创建+队员入队的时候，就已经校验了
+        // 不需要再做权限校验（参赛学院要求），因为创建+队员入队的时候，就已经校验了
         // todo: 如果想做校验权限，需要去查出用户User实体类信息，再根据实体类去查权限
         // 创建报名信息
         RegistrationInfo registrationInfo = new RegistrationInfo();
@@ -91,6 +98,32 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新队伍状态失败");
         }
         return true;
+    }
+
+    private void checkTeamSize(MatchInfoProfileVO matchInfo, TeamInfoVO teamInfoById)
+    {
+        // + 1算上队长
+        final int teamUserListSize = teamInfoById.getUserList().size() + 1;
+        final int teamTeacherListSize = teamInfoById.getTeacherList().size();
+
+        if (matchInfo.getMaxTeamSize() < teamUserListSize
+                || matchInfo.getMinTeamSize() > teamTeacherListSize)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, String.format(
+                            "参赛人数不符合比赛要求的：最大人数%d，最少人数%d，当前人数%d",
+                            matchInfo.getMaxTeamSize(),
+                            matchInfo.getMinTeamSize(),
+                            teamUserListSize));
+        }
+        if (matchInfo.getMaxTeacherSize() < teamTeacherListSize
+                || matchInfo.getMinTeacherSize() > teamTeacherListSize)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, String.format(
+                    "指导教师人数不符合比赛要求的：最大人数%d，最少人数%d，当前人数%d",
+                    matchInfo.getMaxTeacherSize(),
+                    matchInfo.getMinTeacherSize(),
+                    teamTeacherListSize));
+        }
     }
 }
 

@@ -23,9 +23,9 @@ public class TeamInnerController implements TeamInfoFeignClient
 
     @Override
     @GetMapping("/getById")
-    public TeamInfoVO getTeamInfoById(@RequestParam("teamId") Long teamId)
+    public TeamInfoVO getTeamProfileInfoById(@RequestParam("teamId") Long teamId)
     {
-        return teamInfoService.getTeamInfoById(teamId, null, false);
+        return teamInfoService.getTeamInfoById(teamId, null, true, true);
     }
     @Override
     @PostMapping("/register")

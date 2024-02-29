@@ -267,6 +267,6 @@ public class TeamController
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍不存在");
         }
         User loginUser = userService.getLoginUser(request);
-        return ResultUtils.success(teamService.getTeamInfoById(teamId, loginUser, true));
+        return ResultUtils.success(teamService.getTeamInfoById(teamId, loginUser, true, false));
     }
 }

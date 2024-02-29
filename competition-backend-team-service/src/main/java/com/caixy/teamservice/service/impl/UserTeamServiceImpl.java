@@ -3,6 +3,7 @@ package com.caixy.teamservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caixy.model.entity.UserTeam;
+import com.caixy.model.enums.team.TeamRoleEnum;
 import com.caixy.teamservice.mapper.UserTeamMapper;
 import com.caixy.teamservice.service.UserTeamService;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class UserTeamServiceImpl extends ServiceImpl<UserTeamMapper, UserTeam>
     implements UserTeamService
 {
     /**
-     * 检查当前用户是否已经创建过队伍了
+     * 检查当前用户是否已经加入或创建过这个比赛的其他队伍了
      *
      * @author CAIXYPROMISE
      * @version 1.0
@@ -31,6 +32,8 @@ public class UserTeamServiceImpl extends ServiceImpl<UserTeamMapper, UserTeam>
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", userId);
         queryWrapper.eq("raceId", raceId);
+        // 排除掉审核中或拒绝的队伍
+        queryWrapper.notIn("userRole", TeamRoleEnum.REJECT.getCode(), TeamRoleEnum.APPLYING.getCode());
         return this.count(queryWrapper) > 0;
     }
 
@@ -49,6 +52,7 @@ public class UserTeamServiceImpl extends ServiceImpl<UserTeamMapper, UserTeam>
        queryWrapper.notIn("userId", userId);
        return this.count(queryWrapper) > 0;
     }
+
 }
 
 

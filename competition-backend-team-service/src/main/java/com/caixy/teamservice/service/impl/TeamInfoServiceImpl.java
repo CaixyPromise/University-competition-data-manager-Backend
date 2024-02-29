@@ -1,6 +1,7 @@
 package com.caixy.teamservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,6 +16,7 @@ import com.caixy.model.dto.team.*;
 import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.entity.UserTeam;
+import com.caixy.model.enums.team.TeamRoleEnum;
 import com.caixy.model.enums.team.TeamStatusEnum;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
 import com.caixy.model.vo.team.TeamInfoPageVO;
@@ -24,7 +26,6 @@ import com.caixy.model.vo.user.UserTeamWorkVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.serviceclient.service.CompetitionFeignClient;
 import com.caixy.serviceclient.service.UserFeignClient;
-import com.caixy.model.enums.team.TeamRoleEnum;
 import com.caixy.teamservice.mapper.TeamInfoMapper;
 import com.caixy.teamservice.mapper.UserTeamMapper;
 import com.caixy.teamservice.service.TeamInfoService;
@@ -156,6 +157,8 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             password = EncryptionUtils.encodePassword(password);
         }
         teamInfo.setPassword(password); // 设置团队密码
+        // 校验队长的信息是否能创建这个比赛的队伍
+        checkPermission(matchInfo, loginUser);
         // 6. 插入队伍信息到队伍表
         log.info("teamInfo: {}", teamInfo);
         // 设置比赛id
@@ -194,11 +197,15 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             }
         }
         // 校验用户是否存在
-        Boolean allUserIsExist = userService.validateUsers(userIds);
-        if (!allUserIsExist)
+        List<User> allUserIsExist = userService.listByIds(userIds);
+        if (allUserIsExist.size() != userIds.size() ||
+                allUserIsExist.isEmpty())
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "队员用户信息不存在，请检查重试");
         }
+        // 校验队员是否有权限参加比赛
+        allUserIsExist.forEach(item -> checkPermission(matchInfo, item));
+        // 校验用户是否加入其他队伍
         boolean checkUserIsJoin = userTeamService.batchCheckIsJoin(userIds, raceId);
         if (checkUserIsJoin)
         {
@@ -365,16 +372,8 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
             }
         }
-        final Long matchId = teamJoinRequest.getTeamId();
-        if (matchId == null || matchId < 0)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛id不合法");
-        }
-        MatchInfoProfileVO matchInfoProfileVO = matchService.getMatchInfo(teamJoinRequest.getRaceId());
-        if (matchInfoProfileVO == null)
-        {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛不存在");
-        }
+        final Long matchId = teamJoinRequest.getRaceId();
+        MatchInfoProfileVO matchInfoProfileVO = getMatchInfoProfileVO(matchId);
         // 该用户已加入的队伍数量
         // 检查用户是否已经加入这个比赛的任何队伍
         long userId = loginUser.getId();
@@ -388,26 +387,22 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             {
                 // 抢到锁并执行
                 log.info("getLock: " + Thread.currentThread().getId());
-                // 检查有没有被限制参加比赛
-                HashMap<Long, HashMap<String, String>> matchPermissionRule =
-                        matchInfoProfileVO.getMatchPermissionRule();
-                if (matchPermissionRule != null)
-                {
-                    HashMap<String, String> departmentMap =
-                            matchPermissionRule.get(loginUser.getUserDepartment());
-                    if (departmentMap != null)
-                    {
-                        if (departmentMap.get(loginUser.getUserMajor().toString()) != null)
-                        {
-                            throw new BusinessException(ErrorCode.OPERATION_ERROR, "没有权限参加比赛，快去看看其他比赛吧~");
-                        }
-                    }
-                }
+                checkPermission(matchInfoProfileVO, loginUser);
+
                 // 不能重复加入已加入的队伍
-                int isJoin = userTeamMapper.checkUserInTeamOrRace(userId, teamJoinRequest.getTeamId(), matchId);
-                if (isJoin > 0)
+                List<UserTeam> isJoinList =
+                        userTeamMapper.checkUserInTeamOrRace(userId, teamJoinRequest.getTeamId(), matchId);
+                if (!isJoinList.isEmpty())
                 {
-                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "您已经加入这个比赛的其他队伍啦！");
+                    boolean canJoin = isJoinList.stream().anyMatch(userTeam ->
+                            userTeam.getRaceId().equals(matchId) &&
+                                    (TeamRoleEnum.REJECT.getCode().equals(userTeam.getUserRole()) ||
+                                            TeamRoleEnum.APPLYING.getCode().equals(userTeam.getUserRole()))
+                    );
+                    if (!canJoin)
+                    {
+                        throw new BusinessException(ErrorCode.PARAMS_ERROR, "您已经加入这个比赛的其他队伍啦！");
+                    }
                 }
 
                 // 已加入队伍的人数
@@ -420,7 +415,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 UserTeam userTeam = new UserTeam();
                 userTeam.setUserId(userId);
                 userTeam.setRaceId(matchId);
-                userTeam.setUserRole(TeamRoleEnum.APPLY.getCode());
+                userTeam.setUserRole(TeamRoleEnum.APPLYING.getCode());
                 userTeam.setTeamId(teamId);
                 userTeam.setJoinTime(new Date());
                 return userTeamService.save(userTeam);
@@ -525,6 +520,13 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return this.removeById(teamId);
     }
 
+    /**
+     * 遍历队伍信息页面
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:27
+     */
     @Override
     public Page<TeamInfoPageVO> listByPage(TeamQuery teamQuery, boolean isAdmin)
     {
@@ -532,6 +534,10 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         BeanUtils.copyProperties(teamQuery, team);
         Page<TeamInfo> page = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
         QueryWrapper<TeamInfo> queryWrapper = new QueryWrapper<>(team);
+        // 排除私有、已注册、不公开的团队信息
+        queryWrapper.notIn("status", TeamStatusEnum.PRIVATE.getValue(),
+                TeamStatusEnum.REGISTED.getValue());
+        queryWrapper.ne("isPublic", 0);
         Page<TeamInfo> resultPage = this.page(page, queryWrapper);
         // 如果查找的数据不是为空
         if (resultPage.getRecords().isEmpty())
@@ -578,7 +584,13 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return result;
     }
 
-
+    /**
+     * 根据id获取团队信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
     @Override
     public TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole)
     {
@@ -597,7 +609,8 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "成员信息不存在");
         }
         // 根据userRole分类出队员信息
-        HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap = new HashMap<>(userTeamWorkVO.stream().collect(Collectors.groupingBy(UserTeamWorkVO::getTeamUserRole)));
+        HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap =
+                new HashMap<>(userTeamWorkVO.stream().collect(Collectors.groupingBy(UserTeamWorkVO::getTeamUserRole)));
         TeamInfoVO teamInfoVO = assembleTeamInfoVO(teamById, matchInfo, groupByUserMap);
         // 获取当前用户是否是队长，在申请状态，或是成员（普通队员或指导老师都是成员）
         if (needRole)
@@ -605,6 +618,146 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             setUserRoleInfo(teamInfoVO, groupByUserMap, loginUser);
         }
         return teamInfoVO;
+    }
+
+    /**
+     * 同意加入队伍请求
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    @Override
+    public boolean resolveJoinTeam(ResolveAndRejectRequest teamJoinRequest, User loginUser)
+    {
+        return handleResolveJoinTeamOrReject(teamJoinRequest, loginUser, true);
+    }
+
+    /**
+     * 拒绝加入队伍请求
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    @Override
+    public boolean rejectJoinTeam(ResolveAndRejectRequest teamJoinRequest, User loginUser)
+    {
+        return handleResolveJoinTeamOrReject(teamJoinRequest, loginUser, false);
+    }
+
+    /**
+     * 调整队伍报名状态
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    @Override
+    public boolean makeRegister(Long teamId)
+    {
+        if (teamId== null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍id不能为空");
+        }
+        UpdateWrapper<TeamInfo> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.set("status", TeamStatusEnum.REGISTED.getValue())
+                .set("isPublic", 0)
+                .eq("id", teamId);
+        return this.update( updateWrapper);
+    }
+
+
+    private boolean handleResolveJoinTeamOrReject(ResolveAndRejectRequest teamJoinRequest, User loginUser, boolean isAccept)
+    {
+        if (teamJoinRequest == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        Long teamId = teamJoinRequest.getTeamId();
+        TeamInfo team = getTeamById(teamId);
+        Date expireTime = team.getExpireTime();
+        if (expireTime != null && expireTime.before(new Date()))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍已过期");
+        }
+        final long userId = loginUser.getId();
+        final User tagetUser = userService.getByAccount(teamJoinRequest.getUserAccount());
+        // 只有队长和管理员才能操作
+        if (!team.getUserId().equals(userId) && !userService.isAdmin(loginUser))
+        {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限");
+        }
+
+        final Long matchId = teamJoinRequest.getRaceId();
+
+        MatchInfoProfileVO matchInfoProfileVO = getMatchInfoProfileVO(matchId);
+
+        // 检查用户是否已经加入这个比赛的任何队伍
+
+        // 只有一个线程能获取到锁
+        if (redisOperatorService.tryGetDistributedLock(
+                isAccept ? RedisConstant.RESOLVE_JOIN_TEAM : RedisConstant.REJECT_JOIN_TEAM,
+                String.valueOf(userId), RedisOperatorService.UNLIMITED_RETRY_TIMES))
+        {
+            try
+            {
+                // 抢到锁并执行
+                if (isAccept)
+                {
+                    checkPermission(matchInfoProfileVO, loginUser);
+                }
+
+                // 检查有没有在申请状态
+                QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("teamId", teamId);
+                queryWrapper.eq("userId", tagetUser.getId());
+                UserTeam applyUser = userTeamMapper.selectOne(queryWrapper);
+                if (applyUser == null)
+                {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "没有申请加入该队伍");
+                }
+                if (applyUser.getUserRole().equals(TeamRoleEnum.REJECT.getCode()))
+                {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "申请被拒绝，无法再次申请");
+                }
+                if (!applyUser.getUserRole().equals(TeamRoleEnum.APPLYING.getCode()))
+                {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "已经加入该队伍");
+                }
+                // 已加入队伍的人数
+                long teamHasJoinNum = this.countTeamUserByTeamId(teamId);
+                if (teamHasJoinNum >= team.getMaxNum() || teamHasJoinNum >= matchInfoProfileVO.getMaxTeamSize())
+                {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍人数已满或达到比赛要求上限");
+                }
+                // 修改队伍信息
+                if (isAccept)
+                {
+                    applyUser.setUserRole(TeamRoleEnum.MEMBER.getCode());
+                }
+                else
+                {
+                    applyUser.setUserRole(TeamRoleEnum.REJECT.getCode());
+                    // todo: 实现站内通知时，发送通知
+                }
+                return userTeamService.updateById(applyUser);
+            }
+            catch (Exception e)
+            {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "修改队伍失败: " + e.getMessage());
+            }
+            finally
+            {
+                // 只能释放自己的锁
+                redisOperatorService.releaseDistributedLock(RedisConstant.RESOLVE_JOIN_TEAM, String.valueOf(userId));
+            }
+        }
+        else
+        {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "审批队员加入队伍失败");
+        }
     }
 
     private MatchGroupPair getCategoryAndEventName(Long categoryId, Long eventId, MatchInfoProfileVO matchInfoProfileVO)
@@ -623,7 +776,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("teamId", teamId);
         queryWrapper.eq("raceId", raceId);
-        queryWrapper.eq("userRole", TeamRoleEnum.APPLY.getCode());
+        queryWrapper.eq("userRole", TeamRoleEnum.APPLYING.getCode());
         return userTeamMapper.selectList(queryWrapper);
     }
 
@@ -669,6 +822,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
     {
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
         userTeamQueryWrapper.eq("teamId", teamId);
+        userTeamQueryWrapper.ne("userRole", TeamRoleEnum.REJECT.getCode());
         return userTeamService.count(userTeamQueryWrapper);
     }
 
@@ -686,6 +840,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
 
     private TeamInfoVO assembleTeamInfoVO(TeamInfo teamInfo, MatchInfoProfileVO matchInfo, HashMap<Integer, List<UserTeamWorkVO>> groupByUserMap)
     {
+        List<UserTeamWorkVO> memberUserList = groupByUserMap.get(TeamRoleEnum.MEMBER.getCode());
         TeamInfoVO teamInfoVO = new TeamInfoVO();
         teamInfoVO.setTeamDesc(teamInfo.getDescription());
         teamInfoVO.setRaceId(teamInfo.getRaceId().toString());
@@ -694,12 +849,12 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         teamInfoVO.setRaceName(matchInfo.getMatchName());
         teamInfoVO.setTeamTags(JsonUtils.jsonToList(teamInfo.getTeamTags()));
         teamInfoVO.setTeamMaxNum(teamInfo.getMaxNum());
-        teamInfoVO.setTeamCurrentNum(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()).size());
+        teamInfoVO.setTeamCurrentNum(memberUserList == null ? 1 : memberUserList.size() + 1);
         teamInfoVO.setRaceMaxNum(matchInfo.getMaxTeamSize());
         teamInfoVO.setRaceMinNum(matchInfo.getMinTeamSize());
         teamInfoVO.setNeedPassword(isNeedPassword(teamInfo));
         teamInfoVO.setTeacherList(groupByUserMap.get(TeamRoleEnum.TEACHER.getCode()));
-        teamInfoVO.setUserList(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()));
+        teamInfoVO.setUserList(memberUserList);
         teamInfoVO.setLeaderInfo(groupByUserMap.get(TeamRoleEnum.LEADER.getCode()).get(0));
         MatchGroupPair matchGroupPair =
                 getCategoryAndEventName(teamInfo.getCategoryId(), teamInfo.getEventId(), matchInfo);
@@ -717,12 +872,12 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         if (leaderVO.getUserAccount().equals(loginUser.getUserAccount()))
         {
             teamInfoVO.setIsLeader(true);
-            teamInfoVO.setApplyList(groupByUserMap.get(TeamRoleEnum.APPLY.getCode()));
+            teamInfoVO.setApplyList(groupByUserMap.get(TeamRoleEnum.APPLYING.getCode()));
             teamInfoVO.setIsMember(false);
             teamInfoVO.setIsApply(false);
             return;
         }
-        boolean isApply = groupByUserMap.get(TeamRoleEnum.APPLY.getCode())
+        boolean isApply = groupByUserMap.get(TeamRoleEnum.APPLYING.getCode())
                 .stream()
                 .anyMatch(vo -> vo.getUserAccount().equals(loginUser.getUserAccount()));
         if (isApply)
@@ -735,10 +890,10 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
 
         boolean isMember =
                 Stream.of(groupByUserMap.get(TeamRoleEnum.MEMBER.getCode()),
-                                            groupByUserMap.get(TeamRoleEnum.TEACHER.getCode())
+                                groupByUserMap.get(TeamRoleEnum.TEACHER.getCode())
                         )
-                    .flatMap(Collection::stream)
-                    .anyMatch(vo -> vo.getUserAccount().equals(loginUser.getUserAccount()));
+                        .flatMap(Collection::stream)
+                        .anyMatch(vo -> vo.getUserAccount().equals(loginUser.getUserAccount()));
         if (isMember)
         {
             teamInfoVO.setIsMember(true);
@@ -747,6 +902,38 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         }
     }
 
+    private MatchInfoProfileVO getMatchInfoProfileVO(Long raceId)
+    {
+        if (raceId == null || raceId < 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛id不合法");
+        }
+        MatchInfoProfileVO matchInfoProfileVO = matchService.getMatchInfo(raceId);
+        if (matchInfoProfileVO == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "比赛不存在");
+        }
+        return matchInfoProfileVO;
+    }
+
+    private void checkPermission(MatchInfoProfileVO matchInfoProfileVO, User loginUser)
+    {
+        // 检查有没有被限制参加比赛
+        HashMap<Long, HashMap<String, String>> matchPermissionRule =
+                matchInfoProfileVO.getMatchPermissionRule();
+        if (matchPermissionRule != null)
+        {
+            HashMap<String, String> departmentMap =
+                    matchPermissionRule.get(loginUser.getUserDepartment());
+            if (departmentMap != null)
+            {
+                if (departmentMap.get(loginUser.getUserMajor().toString()) != null)
+                {
+                    throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有权限参加比赛，快去看看其他比赛吧~");
+                }
+            }
+        }
+    }
 }
 
 

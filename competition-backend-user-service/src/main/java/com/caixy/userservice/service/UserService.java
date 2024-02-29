@@ -130,4 +130,8 @@ public interface UserService extends IService<User>
     UserWorkVO getUserWorkVO(long userId);
 
     List<SearchUserVO> listSearchUserVO(UserSearchRequest payload);
+
+    User getByAccount(String userAccount);
+
+    List<User> getByAccounts(List<String> userAccount);
 }

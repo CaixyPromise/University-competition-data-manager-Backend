@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -141,8 +142,40 @@ public class TeamController
         return ResultUtils.success(result);
     }
 
+    @PostMapping("/join/resolve")
+    public BaseResponse<Boolean> handleResolveJoinTeam(@RequestBody ResolveAndRejectRequest teamJoinRequest,
+                                                       HttpServletRequest request)
+    {
+        if (teamJoinRequest == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        boolean result = teamService.resolveJoinTeam(teamJoinRequest, loginUser);
+        return ResultUtils.success(result);
+    }
+
+    @PostMapping("/join/reject")
+    public BaseResponse<Boolean> handleRejectJoinTeam(@RequestBody
+                                                      @Valid
+                                                      ResolveAndRejectRequest teamJoinRequest,
+                                                      HttpServletRequest request)
+    {
+        if (teamJoinRequest == null)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        boolean result = teamService.rejectJoinTeam(teamJoinRequest, loginUser);
+        return ResultUtils.success(result);
+    }
+
+
     @PostMapping("/quit")
-    public BaseResponse<Boolean> quitTeam(@RequestBody TeamQuitRequest teamQuitRequest, HttpServletRequest request)
+    public BaseResponse<Boolean> quitTeam(@RequestBody
+                                          @Valid
+                                          TeamQuitRequest teamQuitRequest,
+                                          HttpServletRequest request)
     {
         if (teamQuitRequest == null)
         {

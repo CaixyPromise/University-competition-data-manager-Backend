@@ -31,7 +31,6 @@ import java.util.Map;
             path = "/api/user/inner")
 public interface UserFeignClient
 {
-
     /**
      * 判断列表内的用户id是否合法且存在
      *
@@ -39,7 +38,6 @@ public interface UserFeignClient
      * @since 2024/2/27 22:01
      * @version 1.0
      */
-
     @PostMapping("/validate/users")
     Boolean validateUsers(@RequestBody List<Long> userIds);
 
@@ -63,6 +61,17 @@ public interface UserFeignClient
     @GetMapping("/get/id")
     User getById(@RequestParam("userId") long userId);
 
+    /**
+     * 根据 学号/工号 获取用户
+     *
+     * @param userAccount
+     * @return
+     */
+    @GetMapping("/get/account")
+    User getByAccount(@RequestParam("userId") String userAccount);
+
+    @GetMapping("/get/account/list")
+    List<User> listUserByAccount(@RequestBody List<String> userAccount);
 
     @GetMapping("/get/id/vo")
     UserWorkVO getUserWorkVO(@RequestParam("userId") long userId);

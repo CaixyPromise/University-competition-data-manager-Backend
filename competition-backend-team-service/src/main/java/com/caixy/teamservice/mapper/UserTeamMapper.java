@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caixy.model.entity.UserTeam;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @author CAIXYPROMISE
  * @description 针对表【user_team(用户队伍关系)】的数据库操作Mapper
@@ -20,9 +22,9 @@ public interface UserTeamMapper extends BaseMapper<UserTeam>
      * @version 1.0
      * @since 2024/2/29 00:17
      */
-    int checkUserInTeamOrRace(@Param("userId") Long userId,
-                              @Param("teamId") Long teamId,
-                              @Param("raceId") Long raceId);
+    List<UserTeam> checkUserInTeamOrRace(@Param("userId") Long userId,
+                                         @Param("teamId") Long teamId,
+                                         @Param("raceId") Long raceId);
 }
 
 

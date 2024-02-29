@@ -26,9 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -327,6 +329,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         List<User> userList = this.baseMapper.selectList(queryWrapper);
         return userList.stream().map(SearchUserVO::EntityConvertToVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getByAccounts(List<String> userAccount)
+    {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("userAccount", userAccount);
+        return this.baseMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public User getByAccount(String userAccount)
+    {
+        List<User> byAccounts = getByAccounts(Collections.singletonList(userAccount));
+        return CollectionUtils.isEmpty(byAccounts) ? null : byAccounts.get(0);
     }
 
     // 私有方法，用于检查账户是否重复

@@ -15,6 +15,7 @@ import java.io.Serializable;
 @Data
 public class SearchUserVO implements Serializable
 {
+    private Long userId;
     /**
      * 账号(用户学/工号)
      */
@@ -41,6 +42,7 @@ public class SearchUserVO implements Serializable
         vo.setUserDepartment(String.valueOf(user.getUserDepartment()));
         vo.setUserName(user.getUserName());
         vo.setUserAccount(user.getUserAccount());
+        vo.setUserId(user.getId());
         return vo;
     }
 

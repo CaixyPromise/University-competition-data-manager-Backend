@@ -178,6 +178,10 @@ public class MatchInfoServiceImpl extends ServiceImpl<MatchInfoMapper, MatchInfo
     {
         log.info("[getMatchInfo] 获取比赛详细信息接口，matchId: {}, canAdmin: {}", matchId, canAdmin);
         MatchInfo matchInfo = this.getById(matchId);
+        if (matchInfo == null)
+        {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "比赛不存在");
+        }
         return getMatchInfoProfileVO(matchInfo, canAdmin);
     }
 

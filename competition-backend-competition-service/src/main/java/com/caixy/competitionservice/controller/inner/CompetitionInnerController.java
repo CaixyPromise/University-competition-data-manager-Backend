@@ -36,7 +36,9 @@ public class CompetitionInnerController implements CompetitionFeignClient
             throw new IllegalArgumentException("比赛ID不合法");
         }
         log.info("获取比赛信息，matchId:{}", matchId);
-        return matchInfoService.getMatchInfo(matchId, true);
+        MatchInfoProfileVO matchInfo = matchInfoService.getMatchInfo(matchId, true);
+        log.info("获取比赛信息成功，matchId:{}", matchId);
+        return matchInfo;
     }
 
     /**

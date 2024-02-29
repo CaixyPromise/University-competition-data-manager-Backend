@@ -22,16 +22,9 @@
         updateTime,isDelete
     </sql>
 
-    <select id="checkUserInTeamOrRace" resultType="java.lang.Integer">
-        SELECT
-            CASE
-                WHEN COUNT(*) > 0 THEN 1
-                ELSE 0
-                END
-        FROM
-            user_team
-        WHERE
-            userId = #{userId}
+    <select id="checkUserInTeamOrRace" resultType="com.caixy.model.entity.UserTeam">
+        SELECT * FROM user_team
+        WHERE userId = #{userId}
           AND raceId = #{raceId}
           AND isDelete = 0
           AND (

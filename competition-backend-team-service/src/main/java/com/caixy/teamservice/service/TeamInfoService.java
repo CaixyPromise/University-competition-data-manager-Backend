@@ -70,7 +70,49 @@ public interface TeamInfoService extends IService<TeamInfo>
      */
     boolean deleteTeam(long id, User loginUser);
 
+    /**
+     * 遍历队伍信息页面
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:27
+     */
     Page<TeamInfoPageVO> listByPage(TeamQuery teamQuery, boolean isAdmin);
 
+    /**
+     * 根据id获取团队信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
     TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole);
+
+
+    /**
+     * 同意加入队伍请求
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    boolean resolveJoinTeam(ResolveAndRejectRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 拒绝加入队伍请求
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    boolean rejectJoinTeam(ResolveAndRejectRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 调整队伍报名状态
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    boolean makeRegister(Long teamId);
 }

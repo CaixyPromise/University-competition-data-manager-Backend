@@ -9,7 +9,7 @@ package com.caixy.model.enums.team;
  **/
 public enum TeamStatusEnum
 {
-    ISREGISTER(0,"已报名比赛"),
+    REGISTED(3,"已报名比赛"),
 
     PUBLIC(0,"公开"),
 

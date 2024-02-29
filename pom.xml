@@ -17,7 +17,7 @@
         <module>competition-backend-competition-service</module>
         <module>competition-backend-notification-service</module>
         <module>competition-backend-team-service</module>
-        <module>competition-backend-registration-service</module>
+<!--        <module>competition-backend-registration-service</module>-->
         <module>competition-backend-user-service</module>
         <!--  系统层面模块   -->
         <module>competition-backend-service-client</module>

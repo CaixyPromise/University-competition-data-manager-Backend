@@ -28,6 +28,7 @@ public class UserServiceInnerController implements UserFeignClient
     @Resource
     private UserService userService;
 
+
     @Resource
     private DepartmentInfoService departmentInfoService;
 
@@ -79,6 +80,20 @@ public class UserServiceInnerController implements UserFeignClient
     public User getById(@RequestParam long userId)
     {
         return userService.getById(userId);
+    }
+
+    @Override
+    @GetMapping("/get/account")
+    public User getByAccount(@RequestParam("userId") String userAccount)
+    {
+        return userService.getByAccount(userAccount);
+    }
+
+    @Override
+    @GetMapping("/get/account/list")
+    public List<User> listUserByAccount(@RequestBody List<String> userAccount)
+    {
+        return userService.getByAccounts(userAccount);
     }
 
     @Override

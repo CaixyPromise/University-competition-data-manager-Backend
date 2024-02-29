@@ -54,9 +54,6 @@ public class CompetitionInfoController
     @Resource
     private UserFeignClient userService;
 
-
-
-
     private static final int COPY_PROPERTIES_ADD = 1;
 
     private static final int COPY_PROPERTIES_UPDATE = 2;

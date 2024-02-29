@@ -16,7 +16,8 @@ public enum TeamRoleEnum
     LEADER(0, "管理员"),
     MEMBER(1, "成员"),
     TEACHER(2, "指导老师"),
-    APPLY(-1, "申请加入中");
+    APPLYING(-1, "申请加入中"),
+    REJECT(-2, "申请被拒绝");
 
     @Getter
     private final Integer code;

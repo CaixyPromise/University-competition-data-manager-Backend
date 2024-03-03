@@ -86,8 +86,10 @@ public interface TeamInfoService extends IService<TeamInfo>
      * @version 1.0
      * @since 2024/2/29 20:28
      */
-    TeamInfoVO getTeamInfoById(Long teamId, User loginUser, boolean needRole, boolean needLeaderId);
+    TeamInfoVO getTeamAndRaceInfoById(Long teamId, User loginUser, boolean needRole, boolean needLeaderId);
 
+
+    List<TeamInfoVO> getTeamInfoVOByIds(List<Long> teamIds);
 
     /**
      * 同意加入队伍请求

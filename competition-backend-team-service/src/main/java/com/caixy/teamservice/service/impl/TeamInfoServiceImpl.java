@@ -12,6 +12,8 @@ import com.caixy.common.utils.EncryptionUtils;
 import com.caixy.common.utils.JsonUtils;
 import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.match.properties.GroupDataItem;
+import com.caixy.model.dto.message.MessageTemplate;
+import com.caixy.model.dto.message.SendMessageDTO;
 import com.caixy.model.dto.team.*;
 import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
@@ -25,6 +27,7 @@ import com.caixy.model.vo.team.TeamUserVO;
 import com.caixy.model.vo.user.UserTeamWorkVO;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.serviceclient.service.CompetitionFeignClient;
+import com.caixy.serviceclient.service.MessageFeignClient;
 import com.caixy.serviceclient.service.UserFeignClient;
 import com.caixy.teamservice.mapper.TeamInfoMapper;
 import com.caixy.teamservice.mapper.UserTeamMapper;
@@ -66,6 +69,8 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
     @Resource
     private CompetitionFeignClient matchService;
 
+    @Resource
+    private MessageFeignClient messageFeignClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -413,6 +418,16 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 userTeam.setUserRole(TeamRoleEnum.APPLYING.getCode());
                 userTeam.setTeamId(teamId);
                 userTeam.setJoinTime(new Date());
+                SendMessageDTO applyTeamMessage = MessageTemplate.applyTeam(
+                        loginUser.getUserName(),
+                        matchInfoProfileVO.getMatchName(),
+                        team.getName(),
+                        team.getId(),
+                        team.getUserId(),
+                        matchInfoProfileVO.getId(),
+                        matchInfoProfileVO.getSignUpEndTime()
+                );
+                messageFeignClient.sendById(applyTeamMessage);
                 return userTeamService.save(userTeam);
             }
             catch (Exception e)
@@ -537,7 +552,9 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         // 如果查找的数据不是为空
         if (resultPage.getRecords().isEmpty())
         {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "信息为空");
+            Page<TeamInfoPageVO> result = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
+            result.setTotal(0);
+            return result.setRecords(Collections.emptyList());
         }
         final List<Long> matchIds =
                 resultPage.getRecords().stream().map(TeamInfo::getRaceId).collect(Collectors.toList());
@@ -579,23 +596,13 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return result;
     }
 
-    /**
-     * 根据id获取团队信息
-     *
-     * @author CAIXYPROMISE
-     * @version 1.0
-     * @since 2024/2/29 20:28
-     */
-    @Override
-    public TeamInfoVO getTeamInfoById(Long teamId,
-                                      User loginUser,
-                                      boolean needRole,
-                                      boolean needLeaderId)
+    private TeamInfoVO processTeamInfoVO(TeamInfo teamById,
+                                         MatchInfoProfileVO matchInfo,
+                                         User loginUser,
+                                         Long teamId,
+                                         boolean needRole,
+                                         boolean needLeaderId)
     {
-        // 获取队伍信息，这里不需要判断为空，因为在查询中已经判断了，如果为空直接报错
-        TeamInfo teamById = getTeamById(teamId);
-        // 获取比赛信息
-        MatchInfoProfileVO matchInfo = matchService.getMatchInfo(teamById.getRaceId());
         if (matchInfo == null)
         {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "关联比赛信息不存在");
@@ -621,6 +628,39 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             teamInfoVO.setLeaderId(teamById.getUserId());
         }
         return teamInfoVO;
+    }
+
+    /**
+     * 根据id获取团队信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/2/29 20:28
+     */
+    @Override
+    public TeamInfoVO getTeamAndRaceInfoById(Long teamId,
+                                             User loginUser,
+                                             boolean needRole,
+                                             boolean needLeaderId)
+    {
+        // 获取队伍信息，这里不需要判断为空，因为在查询中已经判断了，如果为空直接报错
+        TeamInfo teamById = getTeamById(teamId);
+        // 获取比赛信息
+        MatchInfoProfileVO matchInfo = matchService.getMatchInfo(teamById.getRaceId());
+        return processTeamInfoVO(teamById, matchInfo, loginUser, teamId, needRole, needLeaderId);
+    }
+
+    @Override
+    public List<TeamInfoVO> getTeamInfoVOByIds(List<Long> teamIds)
+    {
+        List<TeamInfo> teamByIds = this.list(new QueryWrapper<TeamInfo>().in("id", teamIds));
+        if (teamByIds.isEmpty())
+        {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "队伍不存在");
+        }
+        MatchInfoProfileVO matchInfo = matchService.getMatchInfo(teamByIds.get(0).getRaceId());
+        return teamByIds.stream().map(teamItem ->
+                processTeamInfoVO(teamItem, matchInfo, null, teamItem.getId(), false, false)).collect(Collectors.toList());
     }
 
     /**
@@ -750,11 +790,28 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 // 修改队伍信息
                 if (isAccept)
                 {
+                    // 同意申请，将申请状态改为成员
                     applyUser.setUserRole(TeamRoleEnum.MEMBER.getCode());
+                    SendMessageDTO joinTeamMessage = MessageTemplate.joinTeam(tagetUser.getUserName(),
+                            matchInfoProfileVO.getMatchName(),
+                            team.getName(),
+                            tagetUser.getId(),
+                            team.getId(),
+                            matchInfoProfileVO.getId(),
+                            matchInfoProfileVO.getSignUpEndTime());
+                    messageFeignClient.sendById(joinTeamMessage);
                 }
                 else
                 {
+                    // 拒绝申请，将申请状态改为拒绝
                     applyUser.setUserRole(TeamRoleEnum.REJECT.getCode());
+                    SendMessageDTO joinTeamMessage = MessageTemplate.rejectTeam(tagetUser.getUserName(),
+                            matchInfoProfileVO.getMatchName(),
+                            team.getName(),
+                            tagetUser.getId(),
+                            team.getId(),
+                            matchInfoProfileVO.getSignUpEndTime());
+                    messageFeignClient.sendById(joinTeamMessage);
                     // todo: 实现站内通知时，发送通知
                 }
                 return userTeamService.updateById(applyUser);

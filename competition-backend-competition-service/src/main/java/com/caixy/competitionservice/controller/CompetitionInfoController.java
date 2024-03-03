@@ -10,6 +10,7 @@ import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
 import com.caixy.competitionservice.service.MatchInfoService;
+import com.caixy.competitionservice.service.RegistrationInfoService;
 import com.caixy.model.dto.match.MatchInfoAddRequest;
 import com.caixy.model.dto.match.MatchInfoQueryRequest;
 import com.caixy.model.dto.match.MatchInfoUpdateRequest;
@@ -18,6 +19,7 @@ import com.caixy.model.entity.User;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
 import com.caixy.model.vo.match.MatchInfoQueryVO;
 import com.caixy.model.vo.match.MatchRegistrationVO;
+import com.caixy.model.vo.match.MyCreateRaceVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -54,11 +56,12 @@ public class CompetitionInfoController
     @Resource
     private UserFeignClient userService;
 
+    @Resource
+    private RegistrationInfoService registrationInfoService;
+
     private static final int COPY_PROPERTIES_ADD = 1;
 
     private static final int COPY_PROPERTIES_UPDATE = 2;
-
-
 
 
     // region 增删改查
@@ -281,6 +284,15 @@ public class CompetitionInfoController
         // 如果当前时间早于报名开始时间或晚于报名结束时间，则不允许报名
         // 如果当前时间不在报名开始时间和报名结束时间之间，则不允许报名
         return now.after(signUpStartTime) && now.before(signUpEndTime);
+    }
+
+    @GetMapping("/get/myCreate")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<List<MyCreateRaceVO>> getMyCreateRaceByRequest(HttpServletRequest request)
+    {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        return ResultUtils.success(registrationInfoService.getMyCreateRaceList(userId));
     }
 
 }

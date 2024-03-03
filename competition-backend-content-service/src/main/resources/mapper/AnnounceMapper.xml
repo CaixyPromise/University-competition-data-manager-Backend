@@ -7,14 +7,16 @@
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.Announce">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="createUserId" column="createUserId" jdbcType="BIGINT"/>
+            <result property="raceId" column="raceId" jdbcType="BIGINT"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
             <result property="content" column="content" jdbcType="VARCHAR"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,createUserId,content,
-        createTime,updateTime,isDelete
+        id,createUserId,raceId,
+        title,content,createTime,
+        updateTime
     </sql>
 </mapper>

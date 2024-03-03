@@ -5,14 +5,11 @@ import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.competitionservice.service.RegistrationInfoService;
-import com.caixy.model.dto.RegistrationRaceRequest;
+import com.caixy.model.dto.registration.RegistrationRaceRequest;
 import com.caixy.model.entity.User;
 import com.caixy.serviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -36,9 +33,6 @@ public class RegistrationController
     @Resource
     private UserFeignClient userService;
 
-
-
-
     @PostMapping("/sign")
     public BaseResponse<Boolean> signUpRace(@RequestBody @Valid
                                             RegistrationRaceRequest registrationRaceRequest,
@@ -51,4 +45,14 @@ public class RegistrationController
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(registrationInfoService.saveRegistrationInfo(registrationRaceRequest, loginUser));
     }
+
+    /**
+     * 获取已经报名的队伍列表
+     *
+     * @author CAIXYPROMISE
+     * @since 2024/3/2 03:43
+     * @version 1.0
+     */
+//    @GetMapping BaseResponse<List<RegistrationInfoVO>>>
+
 }

@@ -1,9 +1,12 @@
 package com.caixy.competitionservice.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caixy.model.dto.RegistrationRaceRequest;
+import com.caixy.model.dto.registration.RegistrationRaceRequest;
 import com.caixy.model.entity.RegistrationInfo;
 import com.caixy.model.entity.User;
+import com.caixy.model.vo.match.MyCreateRaceVO;
+
+import java.util.List;
 
 /**
  * @author CAIXYPROMISE
@@ -20,4 +23,7 @@ public interface RegistrationInfoService extends IService<RegistrationInfo>
      * @since 2024/2/29 17:01
      */
     boolean saveRegistrationInfo(RegistrationRaceRequest registrationRaceRequest, User loginUser);
+
+
+    List<MyCreateRaceVO> getMyCreateRaceList(Long userId);
 }

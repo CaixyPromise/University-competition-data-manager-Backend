@@ -20,6 +20,9 @@ import java.util.List;
         path = "/api/competition/inner")
 public interface CompetitionFeignClient
 {
+    @GetMapping("/get/exist")
+    Boolean isExistById(@RequestParam("matchId") Long raceId);
+
     @GetMapping("/get")
     MatchInfoProfileVO getMatchInfo(@RequestParam("matchId") Long matchId);
 

@@ -73,8 +73,11 @@ public interface UserFeignClient
     @GetMapping("/get/account/list")
     List<User> listUserByAccount(@RequestBody List<String> userAccount);
 
-    @GetMapping("/get/id/vo")
-    UserWorkVO getUserWorkVO(@RequestParam("userId") long userId);
+    @GetMapping("/get/id/workVO")
+    UserWorkVO getUserWorkVO(@RequestParam("userId") Long userId);
+
+    @PostMapping("/get/ids/workVO")
+    List<UserWorkVO> getUserWorksByIds(@RequestBody List<Long> userIds);
 
     /**
      * 根据 id 获取用户列表

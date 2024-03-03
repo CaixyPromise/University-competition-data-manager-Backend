@@ -11,6 +11,7 @@
         <result property="userEmail" column="userEmail" jdbcType="VARCHAR"/>
         <result property="userPhone" column="userPhone" jdbcType="VARCHAR"/>
         <result property="userDepartment" column="userDepartment" jdbcType="BIGINT"/>
+        <result property="userSex" column="userSex" jdbcType="TINYINT"/>
         <result property="userMajor" column="userMajor" jdbcType="BIGINT"/>
         <result property="userName" column="userName" jdbcType="VARCHAR"/>
         <result property="userTags" column="userTags" jdbcType="VARCHAR"/>
@@ -71,4 +72,40 @@
         WHERE u.isDelete = 0
           AND u.id = #{userId}
     </select>
+
+    <select id="getUserWorkVOList" resultType="com.caixy.model.vo.user.UserWorkVO">
+        SELECT u.userName,
+        d.name AS userDepartment,
+        m.name AS userMajor,
+        u.userAccount AS userAccount,
+        u.id AS userId
+--         u.userEmail AS userEmail
+        FROM user u
+        LEFT JOIN department_info d ON u.userDepartment = d.id
+        LEFT JOIN major_info m ON u.userMajor = m.id
+        WHERE u.isDelete = 0
+        AND u.id IN
+        <foreach item="userId" collection="userIds" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="getAboutMe" resultType="com.caixy.model.dto.user.AboutMeDTO">
+        SELECT u.userName,
+               d.name AS userDepartment,
+               m.name AS userMajor,
+               u.userAccount AS userAccount,
+               u.userEmail AS userEmail,
+               u.id AS userId,
+               u.userAvatar AS userAvatar,
+               u.userSex AS userSex,
+               u.userTags AS userTags,
+               u.userProfile AS userProfile
+        FROM user u
+                 LEFT JOIN department_info d ON u.userDepartment = d.id
+                 LEFT JOIN major_info m ON u.userMajor = m.id
+        WHERE u.isDelete = 0
+          AND u.id = #{userId}
+    </select>
+
 </mapper>

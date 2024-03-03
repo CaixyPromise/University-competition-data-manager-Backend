@@ -56,4 +56,7 @@ public class TeamQuery extends PageRequest
      * 0 - 公开，1 - 私有，2 - 加密
      */
     private Integer status;
+
+    private Integer userRole;
+
 }

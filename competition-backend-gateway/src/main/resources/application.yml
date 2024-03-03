@@ -13,11 +13,10 @@ spring:
           uri: lb://competition-backend-competition-service
           predicates:
             - Path=/api/competition/**
-#        文件系统服务不对外开放
-#        - id: competition-backend-content-service
-#          uri: lb://competition-backend-content-service
-#          predicates:
-#            - Path=/api/content/**
+        - id: competition-backend-content-service
+          uri: lb://competition-backend-content-service
+          predicates:
+            - Path=/api/content/**
         - id: competition-backend-team-service
           uri: lb://competition-backend-team-service
           predicates:

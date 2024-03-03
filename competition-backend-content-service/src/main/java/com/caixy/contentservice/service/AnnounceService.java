@@ -1,7 +1,9 @@
 package com.caixy.contentservice.service;
 
+import com.caixy.model.dto.annouce.CreateAnnounceRequest;
 import com.caixy.model.entity.Announce;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.model.entity.User;
 
 /**
 * @author CAIXYPROMISE
@@ -10,4 +12,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface AnnounceService extends IService<Announce> {
 
+    Boolean createAnnounce(CreateAnnounceRequest request, User loginUser);
 }

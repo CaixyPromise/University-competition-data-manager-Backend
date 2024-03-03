@@ -8,10 +8,11 @@ import com.caixy.common.exception.ThrowUtils;
 import com.caixy.competitionservice.mapper.RegistrationInfoMapper;
 import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.competitionservice.service.RegistrationInfoService;
-import com.caixy.model.dto.RegistrationRaceRequest;
+import com.caixy.model.dto.registration.RegistrationRaceRequest;
 import com.caixy.model.entity.RegistrationInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
+import com.caixy.model.vo.match.MyCreateRaceVO;
 import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.serviceclient.service.TeamInfoFeignClient;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author CAIXYPROMISE
@@ -125,6 +127,13 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
                     teamTeacherListSize));
         }
     }
+
+    @Override
+    public List<MyCreateRaceVO> getMyCreateRaceList(Long userId)
+    {
+        return this.baseMapper.countTeamsByRaceIds(userId);
+    }
+
 }
 
 

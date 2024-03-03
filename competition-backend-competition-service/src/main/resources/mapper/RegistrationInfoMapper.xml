@@ -16,4 +16,22 @@
         id,teamId,raceId,
         createdTime,updatedTime
     </sql>
+
+    <select id="countTeamsByRaceIds" resultType="com.caixy.model.vo.match.MyCreateRaceVO">
+        SELECT mi.id,
+               mi.matchName,
+               mi.matchStatus,
+               mi.startTime,
+               mi.endTime,
+               mi.signUpStartTime,
+               mi.signUpEndTime,
+       (SELECT COUNT(*)
+              FROM registration_info ri
+              WHERE ri.raceId = mi.id)
+                   as hasRegistrationNum
+        FROM match_info mi
+        WHERE mi.isDelete = 0
+            AND
+            mi.createdUser = #{userId};
+    </select>
 </mapper>

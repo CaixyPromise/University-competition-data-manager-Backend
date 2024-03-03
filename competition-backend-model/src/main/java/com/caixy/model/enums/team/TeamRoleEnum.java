@@ -29,4 +29,17 @@ public enum TeamRoleEnum
         this.code = code;
         this.label = label;
     }
+
+    public static TeamRoleEnum getEnumByCode(Integer code)
+    {
+        for (TeamRoleEnum teamRoleEnum : TeamRoleEnum.values())
+        {
+            if (teamRoleEnum.getCode().equals(code))
+            {
+                return teamRoleEnum;
+            }
+        }
+        return null;
+    }
+
 }

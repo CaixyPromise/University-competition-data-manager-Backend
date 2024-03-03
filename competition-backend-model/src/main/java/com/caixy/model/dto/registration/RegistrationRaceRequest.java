@@ -1,4 +1,4 @@
-package com.caixy.model.dto;
+package com.caixy.model.dto.registration;
 
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * 报名比赛请求
  *
- * @name: com.caixy.model.dto.RegistrationRaceRequest
+ * @name: com.caixy.model.dto.registration.RegistrationRaceRequest
  * @author: CAIXYPROMISE
  * @since: 2024-02-29 16:56
  **/

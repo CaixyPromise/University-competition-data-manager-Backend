@@ -19,6 +19,7 @@ public class UserWorkVO implements Serializable
     String userName;
     String userAccount;
     String userEmail;
+    Long userId;
 
     private static final long serialVersionUID = 1L;
 }

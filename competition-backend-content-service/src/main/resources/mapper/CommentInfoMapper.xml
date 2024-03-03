@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.caixy.contentservice.mapper.CommentInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.caixy.model.entity.CommentInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="raceId" column="raceId" jdbcType="BIGINT"/>
+            <result property="replyCount" column="replyCount" jdbcType="BIGINT"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userId,raceId,
+        content,replyCount,createTime,isDelete
+    </sql>
+
+</mapper>

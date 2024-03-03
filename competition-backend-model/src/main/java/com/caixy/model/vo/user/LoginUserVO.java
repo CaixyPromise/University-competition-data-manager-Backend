@@ -35,15 +35,6 @@ public class LoginUserVO implements Serializable
      */
     private String userRole;
 
-    /**
-     * 用户部门/院系id(学院)
-     */
-    private Long userDepartment;
-
-    /**
-     * 用户专业id
-     */
-    private Long userMajor;
 
     private static final long serialVersionUID = 1L;
 }

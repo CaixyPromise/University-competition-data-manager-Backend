@@ -97,11 +97,19 @@ public class UserServiceInnerController implements UserFeignClient
     }
 
     @Override
-    @GetMapping("/get/id/vo")
-    public UserWorkVO getUserWorkVO(@RequestParam("userId") long userId)
+    @GetMapping("/get/id/workVO")
+    public UserWorkVO getUserWorkVO(@RequestParam("userId") Long userId)
     {
         return userService.getUserWorkVO(userId);
     }
+
+    @Override
+    @PostMapping("/get/ids/workVO")
+    public List<UserWorkVO> getUserWorksByIds(@RequestBody List<Long> userIds)
+    {
+        return userService.getUserWorksByIds(userIds);
+    }
+
 
     @Override
     @GetMapping("/get/ids")
@@ -109,5 +117,4 @@ public class UserServiceInnerController implements UserFeignClient
     {
         return userService.listByIds(idList);
     }
-
 }

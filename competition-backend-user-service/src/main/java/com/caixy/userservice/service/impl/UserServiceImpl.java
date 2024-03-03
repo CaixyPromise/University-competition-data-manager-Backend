@@ -10,16 +10,14 @@ import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.utils.EncryptionUtils;
 import com.caixy.common.utils.SqlUtils;
+import com.caixy.model.dto.user.AboutMeDTO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.dto.user.UserSearchRequest;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
-import com.caixy.model.vo.user.LoginUserVO;
-import com.caixy.model.vo.user.SearchUserVO;
-import com.caixy.model.vo.user.UserVO;
-import com.caixy.model.vo.user.UserWorkVO;
+import com.caixy.model.vo.user.*;
 import com.caixy.userservice.mapper.UserMapper;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -328,7 +326,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         List<User> userList = this.baseMapper.selectList(queryWrapper);
-        return userList.stream().map(SearchUserVO::EntityConvertToVO).collect(Collectors.toList());
+        return userList.stream().map(SearchUserVO::of).collect(Collectors.toList());
     }
 
     @Override
@@ -346,6 +344,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return CollectionUtils.isEmpty(byAccounts) ? null : byAccounts.get(0);
     }
 
+    @Override
+    public List<UserWorkVO> getUserWorksByIds(List<Long> userId)
+    {
+        List<UserWorkVO> userWorkVOList = this.baseMapper.getUserWorkVOList(userId);
+        log.info("userWorkVOList: {}", userWorkVOList);
+        return userWorkVOList;
+    }
+
     // 私有方法，用于检查账户是否重复
     private void checkUserAccount(String userAccount)
     {
@@ -356,6 +362,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
         }
+    }
+
+    @Override
+    public AboutMeVO getAboutMe(Long userId)
+    {
+        AboutMeDTO aboutMeDto = this.baseMapper.getAboutMe(userId);
+        log.info("aboutMeDto: {}", aboutMeDto);
+        AboutMeVO aboutMeVO = AboutMeVO.of(aboutMeDto);
+        log.info("aboutMeVO: {}", aboutMeVO);
+        return aboutMeVO;
     }
 }
 

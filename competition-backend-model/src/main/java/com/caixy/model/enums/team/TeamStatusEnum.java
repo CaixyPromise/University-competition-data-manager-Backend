@@ -1,5 +1,7 @@
 package com.caixy.model.enums.team;
 
+import lombok.Getter;
+
 /**
  * 队伍开放状态枚举
  *
@@ -7,6 +9,7 @@ package com.caixy.model.enums.team;
  * @author: CAIXYPROMISE
  * @since: 2024-02-26 15:35
  **/
+@Getter
 public enum TeamStatusEnum
 {
     REGISTED(3,"已报名比赛"),
@@ -46,19 +49,9 @@ public enum TeamStatusEnum
         this.text = text;
     }
 
-    public int getValue()
-    {
-        return value;
-    }
-
     public void setValue(int value)
     {
         this.value = value;
-    }
-
-    public String getText()
-    {
-        return text;
     }
 
     public void setText(String text)

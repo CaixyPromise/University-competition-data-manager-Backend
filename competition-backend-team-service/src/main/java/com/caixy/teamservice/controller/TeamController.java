@@ -8,8 +8,10 @@ import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.model.dto.team.*;
+import com.caixy.model.entity.TeamInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.entity.UserTeam;
+import com.caixy.model.enums.team.TeamRoleEnum;
 import com.caixy.model.vo.team.TeamInfoPageVO;
 import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.model.vo.team.TeamUserVO;
@@ -22,10 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -212,7 +211,7 @@ public class TeamController
      * @return
      */
     @GetMapping("/list/my/create")
-    public BaseResponse<List<TeamUserVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request)
+    public BaseResponse<List<TeamInfoVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request)
     {
         if (teamQuery == null)
         {
@@ -220,8 +219,17 @@ public class TeamController
         }
         User loginUser = userService.getLoginUser(request);
         teamQuery.setUserId(loginUser.getId());
-        List<TeamUserVO> teamList = teamService.listTeams(teamQuery, true);
-        return ResultUtils.success(teamList);
+        QueryWrapper<TeamInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", loginUser.getId());
+        List<TeamInfo> list = teamService.list(queryWrapper);
+        // 把list里的id提取出来，并去除重复的
+        List<Long> teamIdList = list.stream().map(TeamInfo::getId).distinct().collect(Collectors.toList());
+        if (teamIdList.isEmpty())
+        {
+            return ResultUtils.success(Collections.emptyList());
+        }
+        List<TeamInfoVO> infoVOByIds = teamService.getTeamInfoVOByIds(teamIdList);
+        return ResultUtils.success(infoVOByIds);
     }
 
 
@@ -233,7 +241,7 @@ public class TeamController
      * @return
      */
     @GetMapping("/list/my/join")
-    public BaseResponse<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request)
+    public BaseResponse<List<TeamInfoVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request)
     {
         if (teamQuery == null)
         {
@@ -242,21 +250,26 @@ public class TeamController
         User loginUser = userService.getLoginUser(request);
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", loginUser.getId());
+        if (teamQuery.getUserRole() != null)
+        {
+            TeamRoleEnum roleEnum = TeamRoleEnum.getEnumByCode(teamQuery.getUserRole());
+            if (roleEnum == null)
+            {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户角色不合法");
+            }
+            queryWrapper.eq("userRole", roleEnum.getCode());
+        }
         List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
-        // 取出不重复的队伍 id
-        // teamId userId
-        // 1, 2
-        // 1, 3
-        // 2, 3
-        // result
-        // 1 => 2, 3
-        // 2 => 3
         Map<Long, List<UserTeam>> listMap = userTeamList.stream()
                 .collect(Collectors.groupingBy(UserTeam::getTeamId));
         List<Long> idList = new ArrayList<>(listMap.keySet());
         teamQuery.setIdList(idList);
-        List<TeamUserVO> teamList = teamService.listTeams(teamQuery, true);
-        return ResultUtils.success(teamList);
+        if (idList.isEmpty())
+        {
+            return ResultUtils.success(Collections.emptyList());
+        }
+        List<TeamInfoVO> teamInfoVOByIds = teamService.getTeamInfoVOByIds(idList);
+        return ResultUtils.success(teamInfoVOByIds);
     }
 
     @GetMapping("/get/info")
@@ -267,6 +280,8 @@ public class TeamController
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍不存在");
         }
         User loginUser = userService.getLoginUser(request);
-        return ResultUtils.success(teamService.getTeamInfoById(teamId, loginUser, true, false));
+        return ResultUtils.success(teamService.getTeamAndRaceInfoById(teamId, loginUser, true, false));
     }
+
+
 }

@@ -25,7 +25,7 @@ public class TeamInnerController implements TeamInfoFeignClient
     @GetMapping("/getById")
     public TeamInfoVO getTeamProfileInfoById(@RequestParam("teamId") Long teamId)
     {
-        return teamInfoService.getTeamInfoById(teamId, null, true, true);
+        return teamInfoService.getTeamAndRaceInfoById(teamId, null, true, true);
     }
     @Override
     @PostMapping("/register")
@@ -33,4 +33,5 @@ public class TeamInnerController implements TeamInfoFeignClient
     {
         return teamInfoService.makeRegister(teamId);
     }
+
 }

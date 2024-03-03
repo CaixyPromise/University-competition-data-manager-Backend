@@ -28,6 +28,13 @@ public class CompetitionInnerController implements CompetitionFeignClient
     private MatchInfoService matchInfoService;
 
     @Override
+    @GetMapping("/get/exist")
+    public Boolean isExistById(@RequestParam("matchId") Long raceId)
+    {
+        return matchInfoService.getById(raceId) != null;
+    }
+
+    @Override
     @GetMapping("/get")
     public MatchInfoProfileVO getMatchInfo(@RequestParam("matchId") Long matchId)
     {

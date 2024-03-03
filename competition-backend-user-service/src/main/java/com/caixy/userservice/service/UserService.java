@@ -8,10 +8,7 @@ import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
 import com.caixy.model.dto.user.UserQueryRequest;
 import com.caixy.model.entity.User;
-import com.caixy.model.vo.user.LoginUserVO;
-import com.caixy.model.vo.user.SearchUserVO;
-import com.caixy.model.vo.user.UserVO;
-import com.caixy.model.vo.user.UserWorkVO;
+import com.caixy.model.vo.user.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -134,4 +131,8 @@ public interface UserService extends IService<User>
     User getByAccount(String userAccount);
 
     List<User> getByAccounts(List<String> userAccount);
+
+    List<UserWorkVO> getUserWorksByIds(List<Long> userId);
+
+    AboutMeVO getAboutMe(Long userId);
 }

@@ -35,7 +35,7 @@ public class SearchUserVO implements Serializable
      */
     private String userMajor;
 
-    public static SearchUserVO EntityConvertToVO(User user)
+    public static SearchUserVO of(User user)
     {
         SearchUserVO vo = new SearchUserVO();
         vo.setUserMajor(String.valueOf(user.getUserMajor()));

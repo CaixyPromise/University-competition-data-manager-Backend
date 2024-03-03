@@ -15,9 +15,7 @@ import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
-import com.caixy.model.vo.user.LoginUserVO;
-import com.caixy.model.vo.user.SearchUserVO;
-import com.caixy.model.vo.user.UserVO;
+import com.caixy.model.vo.user.*;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -369,5 +367,12 @@ public class UserController
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    @GetMapping("/get/me")
+    public BaseResponse<AboutMeVO> getMeByRequest(HttpServletRequest request)
+    {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getAboutMe(loginUser.getId()));
     }
 }

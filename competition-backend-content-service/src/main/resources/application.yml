@@ -21,6 +21,10 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8100
+  session:
+    store-type: redis
+    # 30 天过期
+    timeout: 2592000
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -34,5 +38,17 @@ spring:
     host: 192.168.59.226
     port: 6379
     timeout: 5000
+  main:
+    allow-bean-definition-overriding: true
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 knife4j:
   enable: true

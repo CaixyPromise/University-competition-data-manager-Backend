@@ -27,7 +27,13 @@ public enum RedisConstant
     /**
      * 拒绝入队请求
      */
-    REJECT_JOIN_TEAM("REJECT_JOIN_TEAM", 5L)
+    REJECT_JOIN_TEAM("REJECT_JOIN_TEAM", 5L),
+
+    /**
+     * 申请需求请求
+     */
+    APPLY_DEMAND_LOCK("APPLY_DEMAND_LOCK", 5L),
+
     ;
 
     private final String key;

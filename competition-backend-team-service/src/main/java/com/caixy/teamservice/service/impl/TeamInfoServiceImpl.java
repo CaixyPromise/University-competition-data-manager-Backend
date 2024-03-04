@@ -393,7 +393,9 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         // 只有一个线程能获取到锁
         if (redisOperatorService.tryGetDistributedLock(
                 RedisConstant.JOIN_TEAM_LOCK,
-                String.valueOf(userId), RedisOperatorService.UNLIMITED_RETRY_TIMES))
+                String.valueOf(teamId),
+                String.valueOf(userId),
+                RedisOperatorService.UNLIMITED_RETRY_TIMES))
         {
             try
             {
@@ -437,7 +439,8 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             finally
             {
                 // 只能释放自己的锁
-                redisOperatorService.releaseDistributedLock(RedisConstant.JOIN_TEAM_LOCK, String.valueOf(userId));
+                redisOperatorService.releaseDistributedLock(RedisConstant.JOIN_TEAM_LOCK,
+                        String.valueOf(teamId), String.valueOf(userId));
             }
         }
         else
@@ -716,7 +719,13 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         return this.update(updateWrapper);
     }
 
-
+    /**
+     * 处理加入队伍请求
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0 - 基本实现
+     * @since 2024/3/4 02:08
+     */
     private boolean handleResolveJoinTeamOrReject(ResolveAndRejectRequest teamJoinRequest, User loginUser, boolean isAccept)
     {
         if (teamJoinRequest == null)
@@ -747,8 +756,11 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
 
         // 只有一个线程能获取到锁
         if (redisOperatorService.tryGetDistributedLock(
-                isAccept ? RedisConstant.RESOLVE_JOIN_TEAM : RedisConstant.REJECT_JOIN_TEAM,
-                String.valueOf(userId), RedisOperatorService.UNLIMITED_RETRY_TIMES))
+                isAccept ? RedisConstant.RESOLVE_JOIN_TEAM
+                         : RedisConstant.REJECT_JOIN_TEAM,
+                String.valueOf(teamId),
+                String.valueOf(userId),
+                RedisOperatorService.UNLIMITED_RETRY_TIMES))
         {
             try
             {
@@ -823,7 +835,9 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             finally
             {
                 // 只能释放自己的锁
-                redisOperatorService.releaseDistributedLock(RedisConstant.RESOLVE_JOIN_TEAM, String.valueOf(userId));
+                redisOperatorService.releaseDistributedLock(RedisConstant.RESOLVE_JOIN_TEAM,
+                        String.valueOf(teamId),
+                        String.valueOf(userId));
             }
         }
         else

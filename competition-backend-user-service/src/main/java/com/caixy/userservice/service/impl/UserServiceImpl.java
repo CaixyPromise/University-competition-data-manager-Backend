@@ -345,9 +345,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public List<UserWorkVO> getUserWorksByIds(List<Long> userId)
+    public List<UserWorkVO> getUserWorksByIds(List<Long> userIds)
     {
-        List<UserWorkVO> userWorkVOList = this.baseMapper.getUserWorkVOList(userId);
+        if (userIds.isEmpty())
+        {
+            // 处理空列表的情况，可能是返回空集合或其他逻辑
+            return Collections.emptyList();
+        }
+        List<UserWorkVO> userWorkVOList = this.baseMapper.getUserWorkVOList(userIds);
         log.info("userWorkVOList: {}", userWorkVOList);
         return userWorkVOList;
     }

@@ -1,9 +1,8 @@
-# 应用服务 WEB 访问端口
 server:
   address: 0.0.0.0
-  port: 8107
+  port: 8103
   servlet:
-    context-path: /api/notice
+    context-path: /api/market
     session:
       cookie:
         max-age: 2592000
@@ -11,7 +10,7 @@ server:
 
 spring:
   application:
-    name: competition-backend-notification-service
+    name: competition-backend-market-service
   servlet:
     multipart:
       max-file-size: 20MB
@@ -38,24 +37,6 @@ spring:
     timeout: 5000
   main:
     allow-bean-definition-overriding: true
-  # 邮箱服务
-  mail:
-    host: smtp.163.com
-    username: you_email@example.com
-    password: YOUR_PASSWORD
-    defaultEncoding: UTF-8
-    port: 465
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          ssl:
-            enable: true
-          stattls:
-            require: true
 
 mybatis-plus:
   configuration:

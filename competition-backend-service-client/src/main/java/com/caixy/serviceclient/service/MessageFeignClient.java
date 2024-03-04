@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @Author: CAIXYPROMISE
  * @Date: 2024-03-03 00:37
  **/
-@FeignClient(name = "competition-backend-content-service",
-        path = "/api/content/inner/message")
+@FeignClient(name = "competition-backend-notificationservice-service",
+        path = "/api/notice/inner/message")
 public interface MessageFeignClient
 {
     @PostMapping("/send")

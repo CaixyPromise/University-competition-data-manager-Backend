@@ -21,6 +21,14 @@ spring:
           uri: lb://competition-backend-team-service
           predicates:
             - Path=/api/team/**
+        - id: competition-backend-notification-service
+          uri: lb://competition-backend-notification-service
+          predicates:
+            - Path=/api/notice/**
+        - id: competition-backend-market-service
+          uri: lb://competition-backend-market-service
+          predicates:
+            - Path=/api/market/**
   application:
     name: competition-backend-gateway
   main:

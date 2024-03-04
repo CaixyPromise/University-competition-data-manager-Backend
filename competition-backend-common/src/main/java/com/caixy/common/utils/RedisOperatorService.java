@@ -342,9 +342,9 @@ public class RedisOperatorService
      * @param requestId 请求标识
      * @return 是否获取成功
      */
-    public boolean tryGetDistributedLock(RedisConstant lockKey, String requestId, Long retryTime)
+    public boolean tryGetDistributedLock(RedisConstant lockKey, String itemKey, String requestId, Long retryTime)
     {
-        return tryGetDistributedLock(lockKey.getKey(), requestId, lockKey.getExpire(), retryTime);
+        return tryGetDistributedLock(getFullKey(lockKey, itemKey), requestId, lockKey.getExpire(), retryTime);
     }
 
     public boolean tryGetDistributedLock(String lockKey, String requestId, Long expireTime, Long retryTime)
@@ -377,7 +377,9 @@ public class RedisOperatorService
     {
         Boolean result = stringRedisTemplate.opsForValue().setIfAbsent(
                 lockKey,
-                requestId, expireTime, TimeUnit.SECONDS);
+                requestId,
+                expireTime,
+                TimeUnit.SECONDS);
         if (result != null && result)
         {
             return true;
@@ -409,9 +411,9 @@ public class RedisOperatorService
         return false;
     }
 
-    public boolean releaseDistributedLock(RedisConstant key, String requestId)
+    public boolean releaseDistributedLock(RedisConstant key, String itemKey, String requestId)
     {
-        return releaseDistributedLock(key.getKey(), requestId);
+        return releaseDistributedLock(getFullKey(key, itemKey), requestId);
     }
 
 

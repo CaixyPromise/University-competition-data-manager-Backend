@@ -570,7 +570,6 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         // 获取比赛信息
         HashMap<Long, MatchInfoProfileVO> matchInfos = matchService.getMatchInfoByIds(matchIds);
         // 获取队员信息
-
         List<TeamInfoPageVO> teamInfoPageVOS = resultPage.getRecords().stream().flatMap(item ->
         {
             TeamInfoPageVO pageVO = new TeamInfoPageVO();
@@ -584,10 +583,12 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             pageVO.setMaxNum(matchInfoProfileVO.getMaxTeamSize());
             pageVO.setTeamTags(JsonUtils.jsonToList(item.getTeamTags()));
             pageVO.setNeedPassword(item.getStatus().equals(2) && !item.getPassword().isEmpty());
+            // 如果团队不是公开的，则不显示
             if (item.getIsPublic().equals(0))
             {
                 return Stream.empty();
             }
+            // 如果报名截止时间小于当前时间，则不显示
             if (!matchInfoProfileVO.getSignUpEndTime().after(new Date()))
             {
                 return Stream.empty();

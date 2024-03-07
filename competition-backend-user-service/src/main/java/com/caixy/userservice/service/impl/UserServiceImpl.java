@@ -6,14 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.constant.CommonConstant;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.utils.EncryptionUtils;
+import com.caixy.common.utils.RedisOperatorService;
+import com.caixy.common.utils.RegexUtils;
 import com.caixy.common.utils.SqlUtils;
-import com.caixy.model.dto.user.AboutMeDTO;
-import com.caixy.model.dto.user.UserLoginRequest;
-import com.caixy.model.dto.user.UserQueryRequest;
-import com.caixy.model.dto.user.UserSearchRequest;
+import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
@@ -26,9 +26,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +48,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * 盐值，混淆密码
      */
     public static final String SALT = "caixy";
+    @Resource
+    private RedisOperatorService redisOperatorService;
 
     @Override
     public Boolean validateUserByIds(List<Long> userIds)
@@ -55,9 +59,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return this.count(queryWrapper) > 0;
     }
 
+    /**
+     * 校验添加用户的信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/3/7 18:48
+     */
     @Override
-    public long userRegister(String userAccount, String userPassword)
+    public void validateUserInfo(User registerRequest)
     {
+        final String userAccount = registerRequest.getUserAccount();
+        final String userPassword = registerRequest.getUserPassword();
+        final Integer userSex = registerRequest.getUserSex();
+
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword))
         {
@@ -67,11 +82,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
         }
-        if (userPassword.length() < 8)
+        if (RegexUtils.validatePassword(userPassword))
         {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短或不符合规范");
         }
-        return this.makeRegister(userAccount, userPassword);
+        if (registerRequest.getUserEmail() != null && !RegexUtils.isEmail(registerRequest.getUserEmail()))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式不正确");
+        }
+        if (!validDepartmentAndMajorId(registerRequest.getUserDepartment(), registerRequest.getUserMajor()))
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "学院或专业id错误");
+        }
+        if (userSex == null || userSex < 0 || userSex > 2)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户性别不合法");
+        }
+    }
+
+
+    @Override
+    public long userRegister(UserRegisterRequest registerRequest)
+    {
+        User user = new User();
+        BeanUtils.copyProperties(registerRequest, user);
+        validateUserInfo(user);
+        return this.makeRegister(user);
     }
 
     @Override
@@ -195,6 +231,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return true;
     }
 
+    /**
+     * 获取用户登录脱密信息
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/3/7 18:17
+     */
     @Override
     public LoginUserVO getLoginUserVO(User user)
     {
@@ -256,18 +299,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return queryWrapper;
     }
 
-    @Override
-    public Long makeRegister(String userAccount, String userPassword)
-    {
-        User user = new User();
-        user.setUserAccount(userAccount);
-        user.setUserPassword(userPassword);
-        return this.makeRegister(user);
-    }
 
+    /**
+     * 注册用户
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/3/7 18:15
+     */
     @Override
     public Long makeRegister(User user)
     {
+        // 线程单机锁，保证接口幂等性
         synchronized (user.getUserAccount().intern())
         {
             // 检查账户是否重复
@@ -306,7 +349,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 根据用户姓名和学号模糊查询
         // 使用嵌套SQL以实现(userName LIKE ? OR userAccount LIKE ?)的逻辑
-        if (StringUtils.isNotBlank(payload.getUseKeyword())) {
+        if (StringUtils.isNotBlank(payload.getUseKeyword()))
+        {
             queryWrapper.and(wrapper ->
                     wrapper.like("userName", payload.getUseKeyword())
                             .or()
@@ -362,7 +406,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
-        long count = this.baseMapper.selectCount(queryWrapper);
+        long count = this.count(queryWrapper);
         if (count > 0)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
@@ -373,10 +417,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public AboutMeVO getAboutMe(Long userId)
     {
         AboutMeDTO aboutMeDto = this.baseMapper.getAboutMe(userId);
-        log.info("aboutMeDto: {}", aboutMeDto);
-        AboutMeVO aboutMeVO = AboutMeVO.of(aboutMeDto);
-        log.info("aboutMeVO: {}", aboutMeVO);
-        return aboutMeVO;
+        return AboutMeVO.of(aboutMeDto);
+    }
+
+    @Override
+    public boolean validDepartmentAndMajorId(Long departmentId, Long majorId)
+    {
+        if (departmentId == null || departmentId <= 0 ||
+                majorId == null || majorId <= 0)
+        {
+            return false;
+        }
+        // 校验用户所输入的学院和专业id是否正确
+        // 从redis中取出专业和学院信息
+        HashMap<Long, String> hash =
+                redisOperatorService.getHash(RedisConstant.ACADEMY_MAJOR,
+                        departmentId,
+                        Long.class, String.class);
+        if (hash == null || hash.isEmpty())
+        {
+            return false;
+        }
+        return hash.containsKey(majorId);
     }
 }
 

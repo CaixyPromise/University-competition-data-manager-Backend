@@ -91,6 +91,11 @@ public class CompetitionInfoController
         log.info("postAddRequest: {}", postAddRequest);
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
+        boolean isAdmin = userService.isAdmin(loginUser);
+        if (!isAdmin)
+        {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限");
+        }
         return ResultUtils.success(matchInfoService.addMatchInfo(postAddRequest, logoFile, loginUser));
     }
 

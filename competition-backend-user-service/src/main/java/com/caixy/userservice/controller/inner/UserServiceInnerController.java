@@ -39,20 +39,27 @@ public class UserServiceInnerController implements UserFeignClient
         return userService.validateUserByIds(userIds);
     }
 
+    /**
+     * 校验学院和专业信息是否合法
+     *
+     * @author CAIXYPROMISE
+     * @version 1.0
+     * @since 2024/3/6 21:01
+     */
     @Override
     @PostMapping("/validate/departments-and-majors")
     public DepartAndMajorValidationResponse validateDepartmentsAndMajors(@RequestBody
-                                                                         Map<Long, List<Long>> permissions)
+                                                                         Map<Long, List<Long>> departAndMajorIds)
     {
         DepartAndMajorValidationResponse response = new DepartAndMajorValidationResponse();
-        if (permissions == null || permissions.isEmpty())
+        if (departAndMajorIds == null || departAndMajorIds.isEmpty())
         {
             response.setIsValid(false);
             return response;
         }
         // 提取所有的学院ID和专业ID
-        Set<Long> departmentIds = permissions.keySet();
-        Set<Long> majorIds = permissions.values().stream()
+        Set<Long> departmentIds = departAndMajorIds.keySet();
+        Set<Long> majorIds = departAndMajorIds.values().stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 

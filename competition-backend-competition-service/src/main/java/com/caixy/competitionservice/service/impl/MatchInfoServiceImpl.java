@@ -160,7 +160,7 @@ public class MatchInfoServiceImpl extends ServiceImpl<MatchInfoMapper, MatchInfo
 
             return JWTUtil.createToken(tokenMap, MatchConstants.JWT_TOKEN_KEY);
         }
-        else
+        else    // 如果不需要上传附件，则直接返回新创建的比赛的id
         {
             return String.valueOf(newMatchInfoId);
         }

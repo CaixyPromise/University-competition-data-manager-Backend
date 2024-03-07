@@ -14,8 +14,12 @@ import com.caixy.common.exception.ThrowUtils;
 import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
+import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
-import com.caixy.model.vo.user.*;
+import com.caixy.model.vo.user.AboutMeVO;
+import com.caixy.model.vo.user.LoginUserVO;
+import com.caixy.model.vo.user.SearchUserVO;
+import com.caixy.model.vo.user.UserVO;
 import com.caixy.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -63,12 +67,13 @@ public class UserController
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数不能为空");
         }
+
         // 密码和校验密码相同
         if (!userPassword.equals(checkPassword))
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
-        long result = userService.userRegister(userAccount, userPassword);
+        long result = userService.userRegister(userRegisterRequest);
         return ResultUtils.success(result);
     }
 
@@ -147,21 +152,24 @@ public class UserController
         }
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
-        // 参数校验
-        String userAccount = user.getUserAccount();
-        // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount))
+        // 用户账号不能为空（学号/工号）
+        if (userAddRequest.getUserAccount() == null)
         {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名不能为空");
         }
-        if (userAccount.length() < 4)
+        // 检查身份合法性
+        final UserRoleEnum userRoleCode = UserRoleEnum.getEnumByCode(userAddRequest.getUserRole());
+        if (userRoleCode == null)
         {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户身份不合法");
         }
-        // 默认密码 12345678
-        String defaultPassword = "12345678";
+        user.setUserRole(userRoleCode.getValue());
+        // 1. 管理员添加用户信息时，使用默认默认密码 123 + account
+        String defaultPassword = "123" + userAddRequest.getUserAccount();
         user.setUserPassword(defaultPassword);
-        // 创建
+        // 2. 校验用户信息合法性
+        userService.validateUserInfo(user);
+        // 3. 创建
         Long resultId = userService.makeRegister(user);
         return ResultUtils.success(resultId);
     }
@@ -317,6 +325,7 @@ public class UserController
         userVOPage.setRecords(userVO);
         return ResultUtils.success(userVOPage);
     }
+
     @PostMapping("/search/team/user")
     public BaseResponse<List<SearchUserVO>> searchUserByUserNameAndAccount(@RequestBody UserSearchRequest payload,
                                                                            HttpServletRequest request)

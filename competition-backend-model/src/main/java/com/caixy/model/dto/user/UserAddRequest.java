@@ -10,24 +10,35 @@ public class UserAddRequest implements Serializable
 {
 
     /**
-     * 用户昵称
-     */
-    private String userName;
-
-    /**
-     * 账号
+     * 用户账号
      */
     private String userAccount;
 
     /**
-     * 用户头像
+     * 学院id
      */
-    private String userAvatar;
+    private Long userDepartment;
+    /**
+     * 用户身份
+     */
+    private Integer userRole;
 
     /**
-     * 用户角色: user, admin
+     * 专业id
      */
-    private String userRole;
+    private Long userMajor;
+    /**
+     * 用户性别：1-女；2-男；0；未知
+     */
+    private Integer userSex;
+    /**
+     * 用户邮箱
+     */
+    private String userEmail;
+    /**
+     * 用户手机号
+     */
+    private String userPhone;
 
     private static final long serialVersionUID = 1L;
 }

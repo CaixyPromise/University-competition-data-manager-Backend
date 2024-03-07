@@ -3,6 +3,7 @@ package com.caixy.userservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caixy.model.dto.user.UserRegisterRequest;
 import com.caixy.model.dto.user.UserSearchRequest;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.dto.user.UserLoginRequest;
@@ -29,14 +30,14 @@ public interface UserService extends IService<User>
      */
     Boolean validateUserByIds(List<Long> userIds);
 
+    void validateUserInfo(User registerRequest);
+
     /**
      * 用户注册
      *
-     * @param userAccount   用户账户
-     * @param userPassword  用户密码
-     * @return 新用户 id
+     * @param registerRequest@return 新用户 id
      */
-    long userRegister(String userAccount, String userPassword);
+    long userRegister(UserRegisterRequest registerRequest);
 
     /**
      * 用户登录
@@ -118,7 +119,6 @@ public interface UserService extends IService<User>
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
-    Long makeRegister(String userAccount, String userPassword);
 
     Long makeRegister(User user);
 
@@ -135,4 +135,6 @@ public interface UserService extends IService<User>
     List<UserWorkVO> getUserWorksByIds(List<Long> userId);
 
     AboutMeVO getAboutMe(Long userId);
+
+    boolean validDepartmentAndMajorId(Long departmentId, Long majorId);
 }

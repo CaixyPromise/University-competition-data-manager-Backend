@@ -11,6 +11,7 @@ import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
+import com.caixy.common.utils.JsonUtils;
 import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.model.dto.major.MajorInfoAddRequest;
 import com.caixy.model.dto.major.MajorInfoQueryRequest;
@@ -67,14 +68,21 @@ public class MajorInfoController
     @GetMapping("/get/all")
     public BaseResponse<List<DepartmentWithMajorsVO>> getAllDepartmentAndMajor()
     {
-        DepartmentWithMajorsVO result = new DepartmentWithMajorsVO();
+        String allAcademyInfo = redisOperatorService.getString(RedisConstant.ALL_ACADEMY_MAJOR, "ALL");
+        // 如果Redis中有数据，则直接返回
+        if (allAcademyInfo != null)
+        {
+            List<DepartmentWithMajorsVO> redisList = JsonUtils.jsonToList(allAcademyInfo);
+            return ResultUtils.success(redisList);
+        }
+        // 查询全部学院+专业信息
         Map<String, List<MajorInfoWithDepartmentQueryVO>> majorsMap = majorInfoService.getMajorWithDepartment()
                 .stream()
                 .collect(Collectors.groupingBy(MajorInfoWithDepartmentQueryVO::getDepartmentId));
-        log.info("majors is: {}", majorsMap);
+        // 转化成VO对象
         List<DepartmentWithMajorsVO> departments = majorsMap.entrySet().stream().map(entry -> {
             DepartmentWithMajorsVO departmentWithMajorsVO = new DepartmentWithMajorsVO();
-            // 假设第一个元素代表该部门的信息
+            // 第一个元素代表该部门的信息
             MajorInfoWithDepartmentQueryVO firstElement = entry.getValue().get(0);
             departmentWithMajorsVO.setDepartmentId(Long.parseLong(entry.getKey()));
             departmentWithMajorsVO.setDepartmentName(firstElement.getDepartmentName());

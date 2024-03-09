@@ -1,6 +1,5 @@
 package com.caixy.model.vo.department;
 
-import com.caixy.model.vo.major.MajorInfoVO;
 import lombok.Data;
 
 import java.io.Serializable;

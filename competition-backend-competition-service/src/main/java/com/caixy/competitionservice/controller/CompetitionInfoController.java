@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -232,10 +233,22 @@ public class CompetitionInfoController
      * @return
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<MatchInfoQueryVO>> listMatchInfoByVoPage(@RequestBody MatchInfoQueryRequest postQueryRequest)
+    public BaseResponse<Page<MatchInfoQueryVO>> listMatchInfoByVoPage(@RequestBody MatchInfoQueryRequest postQueryRequest, HttpServletRequest request)
     {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
+        // 防爬虫，如果数量大于30就返回空
+        if (size > 30)
+        {
+            Page<MatchInfoQueryVO> pageInfo = new Page<>(current, size);
+            pageInfo.setRecords(Collections.emptyList());
+            return ResultUtils.success(pageInfo);
+        }
+        // 如果当前页数是3，则需要登录校验。
+        if (current >= 3)
+        {
+            userService.getLoginUser(request);
+        }
         Page<MatchInfo> postPage = matchInfoService.page(new Page<>(current, size));
         Page<MatchInfoQueryVO> voPage = new Page<>(current, size);
         voPage.setTotal(postPage.getTotal());

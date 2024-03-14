@@ -17,6 +17,7 @@ import com.caixy.model.dto.market.UpdateDemandStatusRequest;
 import com.caixy.model.entity.DemandTakes;
 import com.caixy.model.entity.Demands;
 import com.caixy.model.entity.User;
+import com.caixy.model.entity.UserWallet;
 import com.caixy.model.enums.market.DemandStatus;
 import com.caixy.model.vo.market.DemandProfileVO;
 import com.caixy.model.vo.market.DemandVO;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class MarketController
     {
         return "Competition-backend-market service is running! I am ok!";
     }
+
     @PostMapping("/add")
     public BaseResponse<Long> addDemands(@RequestBody DemandAddRequest demandAddRequest, HttpServletRequest request)
     {
@@ -72,6 +75,30 @@ public class MarketController
         demandsService.validPost(post);
         User loginUser = userFeignClient.getLoginUser(request);
         post.setCreatorId(loginUser.getId());
+        BigDecimal reward = post.getReward();
+        // 获取用户钱包信息
+        UserWallet userWallet = userFeignClient.getUserWallet(loginUser.getId());
+        if (userWallet != null)
+        {
+            BigDecimal balance = userWallet.getBalance();
+            if (balance.compareTo(reward) < 0)
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "余额不足");
+            }
+            else
+            {
+                // 检查用户余额是否本次支付
+                if (userWallet.getBalance().compareTo(reward) >= 0)
+                {
+                    // 减少余额，增加冻结金额
+                    userWallet.setFrozenBalance(userWallet.getFrozenBalance().add(reward));
+                    userWallet.setBalance(userWallet.getBalance().subtract(reward));
+                }
+                else {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "余额不足");
+                }
+            }
+        }
         boolean result = demandsService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newPostId = post.getId();
@@ -149,13 +176,13 @@ public class MarketController
                 if (!takerInfo.isEmpty())
                 {
                     Map<Long, UserWorkVO> userWorksByIdsMap =
-                                userFeignClient.getUserWorksByIds(
-                                    takerInfo.stream()
-                                    .map(DemandTakes::getUserId)
-                                    .collect(Collectors.toList()))
-                            .stream()
-                            .collect(Collectors.toMap(UserWorkVO::getUserId,
-                                    item -> item));
+                            userFeignClient.getUserWorksByIds(
+                                            takerInfo.stream()
+                                                    .map(DemandTakes::getUserId)
+                                                    .collect(Collectors.toList()))
+                                    .stream()
+                                    .collect(Collectors.toMap(UserWorkVO::getUserId,
+                                            item -> item));
                     if (!userWorksByIdsMap.isEmpty())
                     {
                         List<TakerProfileVO> takerVOStream = takerInfo.stream().map(item ->
@@ -167,7 +194,7 @@ public class MarketController
                         profileVO.setUserList(takerVOStream);
                     }
                 }
-                else if(status == DemandStatus.IN_PROGRESS.getCode())
+                else if (status == DemandStatus.IN_PROGRESS.getCode())
                 {
                     DemandTakes demandTakerByDemandId = demandTakesService.getDemandTakerByDemandId(id);
                     UserWorkVO takerVo = userFeignClient.getUserWorkVO(demandTakerByDemandId.getUserId());
@@ -185,7 +212,8 @@ public class MarketController
             }
             profileVO.setIsApplied(false);
         }
-        else {
+        else
+        {
             profileVO.setIsApplied(demandsService.isTaker(id, loginUser.getId()));
         }
         return ResultUtils.success(profileVO);
@@ -223,7 +251,7 @@ public class MarketController
      */
     @PostMapping("/list/page/my/vo")
     public BaseResponse<Page<DemandVO>> listMyDemandVOByPage(@RequestBody DemandQueryRequest postQueryRequest,
-                                                           HttpServletRequest request)
+                                                             HttpServletRequest request)
     {
         if (postQueryRequest == null)
         {
@@ -359,9 +387,9 @@ public class MarketController
         }
         final long userId = userFeignClient.getLoginUser(request).getId();
         return ResultUtils.success(demandsService.rejectDemandTake(
-                                    updateStatusRequest.getId(),
-                                    userId,
-                                    updateStatusRequest.getTargetUser()));
+                updateStatusRequest.getId(),
+                userId,
+                updateStatusRequest.getTargetUser()));
     }
 
 }

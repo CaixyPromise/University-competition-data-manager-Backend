@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -551,8 +552,10 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         queryWrapper.notIn("status", TeamStatusEnum.PRIVATE.getValue(),
                 TeamStatusEnum.REGISTED.getValue());
         queryWrapper.ne("isPublic", 0);
+        // 查询尚未过期的团队信息
+        queryWrapper.le("expireTime", LocalDateTime.now());
         Page<TeamInfo> resultPage = this.page(page, queryWrapper);
-        // 如果查找的数据不是为空
+        // 如果查找的数据为空，返回空
         if (resultPage.getRecords().isEmpty())
         {
             Page<TeamInfoPageVO> result = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());
@@ -562,6 +565,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         final List<Long> matchIds =
                 resultPage.getRecords().stream().map(TeamInfo::getRaceId).collect(Collectors.toList());
         final List<Long> teamIds = resultPage.getRecords().stream().map(TeamInfo::getId).collect(Collectors.toList());
+        // todo: 获取团队成员信息（人数），并筛出团队人数已满的队伍信息
 //        userTeamService.batchCount
         if (matchIds.isEmpty())
         {
@@ -569,6 +573,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         }
         // 获取比赛信息
         HashMap<Long, MatchInfoProfileVO> matchInfos = matchService.getMatchInfoByIds(matchIds);
+//        userTeamService
         // 获取队员信息
         List<TeamInfoPageVO> teamInfoPageVOS = resultPage.getRecords().stream().flatMap(item ->
         {
@@ -583,16 +588,6 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
             pageVO.setMaxNum(matchInfoProfileVO.getMaxTeamSize());
             pageVO.setTeamTags(JsonUtils.jsonToList(item.getTeamTags()));
             pageVO.setNeedPassword(item.getStatus().equals(2) && !item.getPassword().isEmpty());
-            // 如果团队不是公开的，则不显示
-            if (item.getIsPublic().equals(0))
-            {
-                return Stream.empty();
-            }
-            // 如果报名截止时间小于当前时间，则不显示
-            if (!matchInfoProfileVO.getSignUpEndTime().after(new Date()))
-            {
-                return Stream.empty();
-            }
             return Stream.of(pageVO);
         }).collect(Collectors.toList());
         Page<TeamInfoPageVO> result = new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize());

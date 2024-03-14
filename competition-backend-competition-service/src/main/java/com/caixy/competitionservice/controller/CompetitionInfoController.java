@@ -141,7 +141,7 @@ public class CompetitionInfoController
         // 获取当前用户，可以不需要登录
         User loginUser = userService.getLoginUser(request, false);
         //  判断是否是管理员
-        boolean canAdmin = userService.isAdmin(loginUser);
+        boolean canAdmin = loginUser != null && userService.isAdmin(loginUser);
         MatchInfoProfileVO profileVO = matchInfoService.getMatchInfo(id, canAdmin);
         log.info("profileVO: {}", profileVO);
         return ResultUtils.success(profileVO);

@@ -32,7 +32,7 @@ public enum RedisConstant
     /**
      * 申请需求请求
      */
-    APPLY_DEMAND_LOCK("APPLY_DEMAND_LOCK", 5L),
+    DEMAND_LOCK("DEMAND_LOCK", 5L),
 
     ;
 

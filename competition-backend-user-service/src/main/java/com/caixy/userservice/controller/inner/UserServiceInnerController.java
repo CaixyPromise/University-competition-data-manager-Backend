@@ -2,10 +2,12 @@ package com.caixy.userservice.controller.inner;
 
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
+import com.caixy.model.entity.UserWallet;
 import com.caixy.model.vo.user.UserWorkVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import com.caixy.userservice.service.DepartmentInfoService;
 import com.caixy.userservice.service.UserService;
+import com.caixy.userservice.service.UserWalletService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,8 @@ public class UserServiceInnerController implements UserFeignClient
 {
     @Resource
     private UserService userService;
+    @Resource
+    private UserWalletService userWalletService;
 
 
     @Resource
@@ -124,4 +128,12 @@ public class UserServiceInnerController implements UserFeignClient
     {
         return userService.listByIds(idList);
     }
+
+    @Override
+    @GetMapping("/get/wallet")
+    public UserWallet getUserWallet(@RequestParam("userId") Long userId)
+    {
+        return userWalletService.getById(userId);
+    }
+
 }

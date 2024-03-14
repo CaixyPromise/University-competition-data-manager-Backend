@@ -5,6 +5,7 @@ import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
+import com.caixy.model.entity.UserWallet;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.user.UserVO;
 import com.caixy.model.vo.user.UserWorkVO;
@@ -154,4 +155,7 @@ public interface UserFeignClient
         BeanUtils.copyProperties(user, userVO);
         return userVO;
     }
+
+    @GetMapping("/get/wallet")
+    UserWallet getUserWallet(@RequestParam("userId") Long userId);
 }

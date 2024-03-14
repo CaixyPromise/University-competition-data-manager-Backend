@@ -167,9 +167,9 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
         try
         {
             // 尝试获取分布式锁
-            boolean lockAcquired = redisOperatorService.tryGetDistributedLock(RedisConstant.APPLY_DEMAND_LOCK,
+            boolean lockAcquired = redisOperatorService.tryGetDistributedLock(RedisConstant.DEMAND_LOCK,
                     String.valueOf(demandId),
-                    String.valueOf(userId),
+                    "demand",
                     null);
             if (!lockAcquired)
             {
@@ -225,9 +225,9 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
         }
         finally
         {
-            redisOperatorService.releaseDistributedLock(RedisConstant.APPLY_DEMAND_LOCK,
+            redisOperatorService.releaseDistributedLock(RedisConstant.DEMAND_LOCK,
                     String.valueOf(demandId),
-                    String.valueOf(userId));
+                    "demand");
         }
     }
 
@@ -244,34 +244,52 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
     @Transactional(rollbackFor = Exception.class)
     public boolean acceptDemandTake(Long demandId, Long loginUserId, Long targetUserId)
     {
-        Demands demand = this.getById(demandId);
-        if (demand == null || !demand.getCreatorId().equals(loginUserId))
+        try
         {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "操作不允许");
-        }
-        if (demand.getStatus() == DemandStatus.IN_PROGRESS.getCode() || demand.getStatus() == DemandStatus.CLOSED.getCode())
-        {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "需求状态不允许接受申请");
-        }
+            // 获取分布式锁，防止单主在接受的时候，有人申请
+            boolean lockAcquired = redisOperatorService.tryGetDistributedLock(RedisConstant.DEMAND_LOCK,
+                    String.valueOf(demandId),
+                    "demand",
+                    null);
+            if (!lockAcquired)
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "系统繁忙，请稍后再试");
+            }
+            Demands demand = this.getById(demandId);
+            if (demand == null || !demand.getCreatorId().equals(loginUserId))
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "操作不允许");
+            }
+            if (demand.getStatus() == DemandStatus.IN_PROGRESS.getCode() || demand.getStatus() == DemandStatus.CLOSED.getCode())
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "需求状态不允许接受申请");
+            }
 
-        demand.setStatus(DemandStatus.IN_PROGRESS.getCode());
-        boolean updateDemand = this.updateById(demand);
-        if (!updateDemand)
-        {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新需求状态失败");
-        }
+            demand.setStatus(DemandStatus.IN_PROGRESS.getCode());
+            boolean updateDemand = this.updateById(demand);
+            if (!updateDemand)
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新需求状态失败");
+            }
 
-        DemandTakes demandTake = demandTakesService.getOne(new QueryWrapper<DemandTakes>().eq("demandId", demandId).eq(
-                "status",
-                TaskStatusEnum.PENDING.getCode()));
-        if (demandTake != null)
-        {
-            demandTake.setStatus(TaskStatusEnum.ACCEPTED.getCode());
-            return demandTakesService.updateById(demandTake);
+            DemandTakes demandTake = demandTakesService.getOne(new QueryWrapper<DemandTakes>().eq("demandId", demandId).eq(
+                    "status",
+                    TaskStatusEnum.PENDING.getCode()));
+            if (demandTake != null)
+            {
+                demandTake.setStatus(TaskStatusEnum.ACCEPTED.getCode());
+                return demandTakesService.updateById(demandTake);
+            }
+            else
+            {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "任务不存在");
+            }
         }
-        else
+        finally
         {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "任务不存在");
+            redisOperatorService.releaseDistributedLock(RedisConstant.DEMAND_LOCK,
+                    String.valueOf(demandId),
+                    "demand");
         }
     }
 

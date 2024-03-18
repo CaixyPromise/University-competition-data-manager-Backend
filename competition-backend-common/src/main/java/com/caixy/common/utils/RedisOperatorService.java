@@ -222,7 +222,7 @@ public class RedisOperatorService
         Long expire = Enum.getExpire();
         HashMap<String, String> stringData = new HashMap<>();
         data.forEach((dataKey, value) ->
-                stringData.put(dataKey, JsonUtils.objectToString(value)));
+                stringData.put(dataKey, JsonUtils.toJsonString(value)));
         stringRedisTemplate.opsForHash().putAll(fullKey, stringData);
         if (expire != null)
         {
@@ -245,7 +245,7 @@ public class RedisOperatorService
     {
         HashMap<String, String> stringData = new HashMap<>();
         data.forEach((dataKey, value) ->
-                stringData.put(dataKey, JsonUtils.objectToString(value)));
+                stringData.put(dataKey, JsonUtils.toJsonString(value)));
         stringRedisTemplate.opsForHash().putAll(key, stringData);
         if (expire != null)
         {

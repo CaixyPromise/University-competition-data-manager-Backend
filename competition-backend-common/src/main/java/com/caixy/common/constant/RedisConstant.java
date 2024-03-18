@@ -34,6 +34,11 @@ public enum RedisConstant
      */
     DEMAND_LOCK("DEMAND_LOCK", 5L),
 
+    /**
+     * 比赛页数缓存
+     */
+    RACE_PAGE_CACHE("RACE_PAGE_CACHE", 60L);
+
     ;
 
     private final String key;

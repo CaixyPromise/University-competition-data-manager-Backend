@@ -1,6 +1,8 @@
 package com.caixy.common.utils;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.LongSerializationPolicy;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -17,7 +19,10 @@ import java.util.Map;
  **/
 public class JsonUtils
 {
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder()
+            .setDateFormat("yyyy-MM-dd HH:mm:ss")
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .serializeNulls().create();
 
     public static HashMap<String, Object> jsonToMap(String json)
     {
@@ -39,7 +44,7 @@ public class JsonUtils
         return gson.toJson(map);
     }
 
-    public static String objectToString(Object object)
+    public static String toJsonString(Object object)
     {
         return gson.toJson(object);
     }

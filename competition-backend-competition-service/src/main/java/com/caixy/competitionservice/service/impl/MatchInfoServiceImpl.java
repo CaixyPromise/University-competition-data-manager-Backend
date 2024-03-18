@@ -74,19 +74,19 @@ public class MatchInfoServiceImpl extends ServiceImpl<MatchInfoMapper, MatchInfo
         MatchInfo post = new MatchInfo();
         BeanUtils.copyProperties(postAddRequest, post);
         post.setMatchPermissionRule(JsonUtils.mapToString(processMatchPermissions));
-        post.setMatchTags(JsonUtils.objectToString(postAddRequest.getMatchTags()));
+        post.setMatchTags(JsonUtils.toJsonString(postAddRequest.getMatchTags()));
         post.setSignUpStartTime(postAddRequest.getSignupDate().get(0));
         post.setSignUpEndTime(postAddRequest.getSignupDate().get(1));
         post.setStartTime(postAddRequest.getMatchDate().get(0));
         post.setEndTime(postAddRequest.getMatchDate().get(1));
-        post.setMatchAward(JsonUtils.objectToString(postAddRequest.getMatchAward()));
+        post.setMatchAward(JsonUtils.toJsonString(postAddRequest.getMatchAward()));
         post.setCreatedUser(loginUser.getId());
-        post.setMatchGroup(JsonUtils.objectToString(postAddRequest.getGroupData()));
+        post.setMatchGroup(JsonUtils.toJsonString(postAddRequest.getGroupData()));
         // 校验人数合法性
         validateSizeList(postAddRequest.getTeacherSize());
         validateSizeList(postAddRequest.getTeamSize());
-        post.setTeacherSize(JsonUtils.objectToString(postAddRequest.getTeacherSize()));
-        post.setTeamSize(JsonUtils.objectToString(postAddRequest.getTeamSize()));
+        post.setTeacherSize(JsonUtils.toJsonString(postAddRequest.getTeacherSize()));
+        post.setTeamSize(JsonUtils.toJsonString(postAddRequest.getTeamSize()));
 
         // 校验图片
         File imageFile = null;

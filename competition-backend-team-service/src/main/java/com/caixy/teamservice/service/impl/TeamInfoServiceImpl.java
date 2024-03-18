@@ -168,7 +168,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
         // 6. 插入队伍信息到队伍表
         log.info("teamInfo: {}", teamInfo);
         // 设置比赛id
-        teamInfo.setTeamTags(JsonUtils.objectToString(teamAddRequest.getTeamTags()));
+        teamInfo.setTeamTags(JsonUtils.toJsonString(teamAddRequest.getTeamTags()));
         teamInfo.setRaceId(teamAddRequest.getMatchId());
         teamInfo.setCategoryId(Long.valueOf(teamAddRequest.getMatchCategoryId()));
         teamInfo.setEventId(Long.valueOf(teamAddRequest.getMatchEventId()));

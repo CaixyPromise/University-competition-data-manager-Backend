@@ -16,16 +16,19 @@ import reactor.core.publisher.Mono;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class GlobalAuthFilter implements GlobalFilter, Ordered {
+public class GlobalAuthFilter implements GlobalFilter, Ordered
+{
 
     private AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain)
+    {
         ServerHttpRequest serverHttpRequest = exchange.getRequest();
         String path = serverHttpRequest.getURI().getPath();
         // 判断路径中是否包含 inner，只允许内部调用
-        if (antPathMatcher.match("/**/inner/**", path)) {
+        if (antPathMatcher.match("/**/inner/**", path))
+        {
             ServerHttpResponse response = exchange.getResponse();
             response.setStatusCode(HttpStatus.FORBIDDEN);
             DataBufferFactory dataBufferFactory = response.bufferFactory();
@@ -38,10 +41,12 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
 
     /**
      * 优先级提到最高
+     *
      * @return
      */
     @Override
-    public int getOrder() {
+    public int getOrder()
+    {
         return 0;
     }
 }

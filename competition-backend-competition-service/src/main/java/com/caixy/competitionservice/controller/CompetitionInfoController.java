@@ -6,9 +6,12 @@ import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.DeleteRequest;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
+import com.caixy.common.constant.RedisConstant;
 import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.common.exception.ThrowUtils;
+import com.caixy.common.utils.JsonUtils;
+import com.caixy.common.utils.RedisOperatorService;
 import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.competitionservice.service.RegistrationInfoService;
 import com.caixy.model.dto.match.MatchInfoAddRequest;
@@ -59,6 +62,9 @@ public class CompetitionInfoController
 
     @Resource
     private RegistrationInfoService registrationInfoService;
+
+    @Resource
+    private RedisOperatorService redisOperatorService;
 
     private static final int COPY_PROPERTIES_ADD = 1;
 
@@ -217,12 +223,33 @@ public class CompetitionInfoController
     {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
-        Page<MatchInfo> postPage = matchInfoService.page(new Page<>(current, size));
+        if (current < 0 || size < 0)
+        {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
         Page<MatchInfoQueryVO> voPage = new Page<>(current, size);
-        voPage.setTotal(postPage.getTotal());
-        List<MatchInfoQueryVO> voList =
-                postPage.getRecords().stream().map(MatchInfoQueryVO::convertToAdminVO).collect(Collectors.toList());
-        voPage.setRecords(voList);
+
+        // 先尝试从缓存中获取
+        String tryGetFromRedis = redisOperatorService.getString(RedisConstant.RACE_PAGE_CACHE, current);
+        if (tryGetFromRedis != null)
+        {
+            // 缓存中有数据，直接返回给调用端
+            log.info("cache hit from redis");
+            List<MatchInfoQueryVO> voList = JsonUtils.jsonToList(tryGetFromRedis);
+            voPage.setTotal(voList.size());
+            voPage.setRecords(voList);
+        }
+        // 没有再从数据库中拿
+        else {
+            Page<MatchInfo> postPage = matchInfoService.page(new Page<>(current, size));
+            voPage.setTotal(postPage.getTotal());
+            List<MatchInfoQueryVO> voList =
+                    postPage.getRecords().stream().map(MatchInfoQueryVO::convertToAdminVO).collect(Collectors.toList());
+            redisOperatorService.setString(RedisConstant.RACE_PAGE_CACHE,
+                    postQueryRequest.getCurrent(),
+                    JsonUtils.toJsonString(voList));
+            voPage.setRecords(voList);
+        }
         return ResultUtils.success(voPage);
     }
 

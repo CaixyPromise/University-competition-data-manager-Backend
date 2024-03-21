@@ -1,15 +1,17 @@
 package com.caixy.competitionservice.controller;
 
+import com.caixy.common.annotation.AuthCheck;
 import com.caixy.common.common.BaseResponse;
 import com.caixy.common.common.ErrorCode;
 import com.caixy.common.common.ResultUtils;
+import com.caixy.common.constant.UserConstant;
 import com.caixy.common.exception.BusinessException;
 import com.caixy.competitionservice.service.MatchInfoService;
 import com.caixy.competitionservice.service.RegistrationInfoService;
 import com.caixy.model.dto.registration.RegistrationRaceRequest;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.match.MatchInfoProfileVO;
-import com.caixy.model.vo.registration.RegistrationInfoVO;
+import com.caixy.model.vo.team.TeamInfoVO;
 import com.caixy.serviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -61,15 +63,14 @@ public class RegistrationController
      * @version 1.0
      */
     @GetMapping("/teamList")
-    public BaseResponse<List<RegistrationInfoVO>> getRegisterTeamListByRaceId(@RequestParam("id") Long raceId,
-                                                                          HttpServletRequest request)
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<List<TeamInfoVO>> getRegisterTeamListByRaceId(@RequestParam("id") Long raceId,
+                                                                      HttpServletRequest request)
     {
         if (raceId == null || raceId <= 0)
         {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
         }
-        // 获取比赛信息
-        MatchInfoProfileVO profileVO = matchInfoService.getMatchInfo(raceId, true);
         // 获取登录用户
         User loginUSer = userService.getLoginUser(request);
         boolean canAdmin = userService.isAdmin(loginUSer);
@@ -77,9 +78,6 @@ public class RegistrationController
         {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限");
         }
-        final Long userId = loginUSer.getId();
-
-        return null;
+        return ResultUtils.success(registrationInfoService.getJoinedList(raceId));
     }
-
 }

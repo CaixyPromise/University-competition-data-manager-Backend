@@ -6,6 +6,7 @@ import com.caixy.teamservice.service.TeamInfoService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 团队信息内部调用接口控制器
@@ -27,6 +28,14 @@ public class TeamInnerController implements TeamInfoFeignClient
     {
         return teamInfoService.getTeamAndRaceInfoById(teamId, null, true, true);
     }
+
+    @Override
+    @GetMapping("/getByIds")
+    public List<TeamInfoVO> getTeamProfileInfoByIds(@RequestParam("teamIds") List<Long> teamIds)
+    {
+        return teamInfoService.getTeamInfoVOByIds(teamIds);
+    }
+
     @Override
     @PostMapping("/register")
     public Boolean register(@RequestParam("teamId") Long teamId)

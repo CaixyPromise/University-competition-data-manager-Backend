@@ -5,6 +5,7 @@ import com.caixy.model.dto.registration.RegistrationRaceRequest;
 import com.caixy.model.entity.RegistrationInfo;
 import com.caixy.model.entity.User;
 import com.caixy.model.vo.match.MyCreateRaceVO;
+import com.caixy.model.vo.team.TeamInfoVO;
 
 import java.util.List;
 
@@ -26,4 +27,6 @@ public interface RegistrationInfoService extends IService<RegistrationInfo>
 
 
     List<MyCreateRaceVO> getMyCreateRaceList(Long userId);
+
+    List<TeamInfoVO> getJoinedList(Long raceId);
 }

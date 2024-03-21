@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author CAIXYPROMISE
@@ -36,6 +38,7 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
 
     @Resource
     private MatchInfoService matchInfoService;
+
 
     /**
      * 保存报名信息
@@ -132,6 +135,20 @@ public class RegistrationInfoServiceImpl extends ServiceImpl<RegistrationInfoMap
     public List<MyCreateRaceVO> getMyCreateRaceList(Long userId)
     {
         return this.baseMapper.countTeamsByRaceIds(userId);
+    }
+
+    @Override
+    public List<TeamInfoVO> getJoinedList(Long raceId)
+    {
+        QueryWrapper<RegistrationInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("raceId", raceId);
+        List<RegistrationInfo> registratedList = this.list(queryWrapper);
+        List<Long> teamIdList = registratedList.stream().map(RegistrationInfo::getTeamId).collect(Collectors.toList());
+        if (teamIdList.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        return teamInfoFeignClient.getTeamProfileInfoByIds(teamIdList);
     }
 
 }

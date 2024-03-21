@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 /**
  * 团队信息内部调用接口
  *
@@ -25,6 +27,9 @@ public interface TeamInfoFeignClient
      */
     @GetMapping("/getById")
     TeamInfoVO getTeamProfileInfoById(@RequestParam("teamId") Long teamId);
+
+    @GetMapping("/getByIds")
+    List<TeamInfoVO> getTeamProfileInfoByIds(@RequestParam("teamIds") List<Long> teamIds);
 
     /**
      * 报名端调用该接口，实现报名

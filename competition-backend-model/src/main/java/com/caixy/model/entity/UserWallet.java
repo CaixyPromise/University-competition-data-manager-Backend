@@ -18,7 +18,7 @@ public class UserWallet implements Serializable {
      * 钱包id
      */
     @TableId(type = IdType.ASSIGN_ID)
-    private Integer id;
+    private Long id;
 
     /**
      * 用户id

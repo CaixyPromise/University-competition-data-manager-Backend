@@ -35,7 +35,7 @@ public class DataLoaderRunner implements ApplicationRunner
     private DepartmentInfoMapper departmentInfoService;
 
     @Override
-    public void run(ApplicationArguments args) throws Exception
+    public void run(ApplicationArguments args)
     {
         Stopwatch stopwatch = Stopwatch.createStarted();
         log.info("开始预热数据...");

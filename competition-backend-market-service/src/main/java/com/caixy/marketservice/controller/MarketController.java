@@ -64,6 +64,7 @@ public class MarketController
     }
 
     @PostMapping("/add")
+    @Transactional(rollbackFor = Exception.class)
     public BaseResponse<Long> addDemands(@RequestBody DemandAddRequest demandAddRequest, HttpServletRequest request)
     {
         if (demandAddRequest == null)
@@ -93,12 +94,24 @@ public class MarketController
                     // 减少余额，增加冻结金额
                     userWallet.setFrozenBalance(userWallet.getFrozenBalance().add(reward));
                     userWallet.setBalance(userWallet.getBalance().subtract(reward));
+
+                    // 更新用户钱包信息
+                    Boolean updateUserWallet = userFeignClient.updateUserWallet(userWallet);
+                    if (!updateUserWallet)
+                    {
+                        throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新用户钱包失败");
+                    }
                 }
                 else {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "余额不足");
                 }
             }
         }
+        else {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户钱包不存在");
+        }
+
+
         boolean result = demandsService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newPostId = post.getId();
@@ -366,7 +379,6 @@ public class MarketController
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         final long userId = userFeignClient.getLoginUser(request).getId();
-        ;
         return ResultUtils.success(demandsService.completeDemand(updateStatusRequest.getId(), userId));
     }
 

@@ -22,7 +22,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/competition
     username: root
-    password: as123456789
+    password: as90976789
   redis:
     database: 1
     host: 192.168.59.226
@@ -35,7 +35,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8100
+        server-addr: 127.0.0.1:9097
   main:
     allow-bean-definition-overriding: true
 

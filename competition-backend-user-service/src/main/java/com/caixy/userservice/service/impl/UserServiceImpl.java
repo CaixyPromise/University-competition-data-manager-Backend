@@ -15,19 +15,23 @@ import com.caixy.common.utils.RegexUtils;
 import com.caixy.common.utils.SqlUtils;
 import com.caixy.model.dto.user.*;
 import com.caixy.model.entity.User;
+import com.caixy.model.entity.UserWallet;
 import com.caixy.model.enums.UserRoleEnum;
 import com.caixy.model.vo.department.UserDepartmentMajorVO;
 import com.caixy.model.vo.user.*;
 import com.caixy.userservice.mapper.UserMapper;
 import com.caixy.userservice.service.UserService;
+import com.caixy.userservice.service.UserWalletService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +54,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public static final String SALT = "caixy";
     @Resource
     private RedisOperatorService redisOperatorService;
+
+    @Resource
+    private UserWalletService userWalletService;
 
     @Override
     public Boolean validateUserByIds(List<Long> userIds)
@@ -308,6 +315,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @since 2024/3/7 18:15
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long makeRegister(User user)
     {
         // 线程单机锁，保证接口幂等性
@@ -326,6 +334,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
+            // 初始化钱包信息
+            UserWallet userWallet = new UserWallet();
+            userWallet.setBalance(BigDecimal.valueOf(0));
+            userWallet.setUserId(user.getId());
+            userWallet.setFrozenBalance(BigDecimal.valueOf(0));
+            userWallet.setPayPassword(user.getUserPassword());
+            userWalletService.save(userWallet);
             return user.getId();
         }
     }
@@ -439,6 +454,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return false;
         }
         return hash.containsKey(majorId);
+    }
+    @Override
+    public Boolean updateWallet(Long addMoney, Long userId)
+    {
+        QueryWrapper<UserWallet> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userId);
+        UserWallet wallet = userWalletService.getOne(queryWrapper);
+        wallet.setBalance(wallet.getBalance().add(new BigDecimal(addMoney)));
+        return userWalletService.updateById(wallet);
     }
 }
 

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -167,7 +168,8 @@ public class AnnounceController
             userVOPage.setRecords(announceVOS);
             return ResultUtils.success(userVOPage);
         }else {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "暂无公告信息");
+            userVOPage.setRecords(Collections.emptyList());
+            return ResultUtils.success(userVOPage);
         }
     }
 

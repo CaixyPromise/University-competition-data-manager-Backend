@@ -15,7 +15,8 @@ public class CorsConfig
 {
 
     @Bean
-    public CorsWebFilter corsFilter() {
+    public CorsWebFilter corsFilter()
+    {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedMethod("*");
         config.setAllowCredentials(true);

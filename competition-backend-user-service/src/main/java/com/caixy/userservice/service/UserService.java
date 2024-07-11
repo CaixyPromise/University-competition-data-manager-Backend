@@ -137,4 +137,6 @@ public interface UserService extends IService<User>
     AboutMeVO getAboutMe(Long userId);
 
     boolean validDepartmentAndMajorId(Long departmentId, Long majorId);
+
+    Boolean updateWallet(Long addMoney, Long userId);
 }

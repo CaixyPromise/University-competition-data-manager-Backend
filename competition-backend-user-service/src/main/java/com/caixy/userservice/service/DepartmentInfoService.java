@@ -49,4 +49,6 @@ public interface DepartmentInfoService extends IService<DepartmentInfo>
      * @since 2024/2/12 01:04
      */
     List<Map<String, Object>> validateDepartmentsAndMajors(List<Long> departmentIds, List<Long> majorIds);
+
+    void departmentAndMajorDataPreload();
 }

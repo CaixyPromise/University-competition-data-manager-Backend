@@ -1,7 +1,7 @@
 # 应用服务 WEB 访问端口
 server:
   address: 0.0.0.0
-  port: 8110
+  port: 8113
   servlet:
     context-path: /api/content
     session:
@@ -20,7 +20,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8100
+        server-addr: 127.0.0.1:9097
   session:
     store-type: redis
     # 30 天过期
@@ -32,7 +32,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/competition
     username: root
-    password: as123456789
+    password: as90976789
   redis:
     database: 1
     host: 192.168.59.226

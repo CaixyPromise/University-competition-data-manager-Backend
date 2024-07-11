@@ -1,5 +1,6 @@
 package com.caixy.userservice.controller.inner;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.caixy.model.dto.department.DepartAndMajorValidationResponse;
 import com.caixy.model.entity.User;
 import com.caixy.model.entity.UserWallet;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +37,13 @@ public class UserServiceInnerController implements UserFeignClient
 
     @Resource
     private DepartmentInfoService departmentInfoService;
+
+    @Override
+    @PostMapping("/update/departemtCache")
+    public void getDepartmentInfoByIdsAndUpdateCache()
+    {
+        departmentInfoService.departmentAndMajorDataPreload();
+    }
 
     @Override
     @PostMapping("/validate/users")
@@ -133,7 +142,27 @@ public class UserServiceInnerController implements UserFeignClient
     @GetMapping("/get/wallet")
     public UserWallet getUserWallet(@RequestParam("userId") Long userId)
     {
-        return userWalletService.getById(userId);
+        QueryWrapper<UserWallet> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userId);
+        return userWalletService.getOne(queryWrapper);
+    }
+
+    @Override
+    @PostMapping("/get/both/wallet")
+    public Map<Long, UserWallet> getBothUserWallet(@RequestBody List<Long> userIds)
+    {
+        QueryWrapper<UserWallet> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("userId", userIds);
+
+        return userWalletService.list(queryWrapper).stream().collect(Collectors.toMap(UserWallet::getUserId, Function.identity()));
+    }
+
+
+    @Override
+    @PostMapping("update/wallet")
+    public Boolean updateUserWallet(@RequestBody UserWallet userWallet)
+    {
+        return userWalletService.updateById(userWallet);
     }
 
 }

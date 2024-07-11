@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -553,7 +552,7 @@ public class TeamInfoServiceImpl extends ServiceImpl<TeamInfoMapper, TeamInfo>
                 TeamStatusEnum.REGISTED.getValue());
         queryWrapper.ne("isPublic", 0);
         // 查询尚未过期的团队信息
-        queryWrapper.le("expireTime", LocalDateTime.now());
+//        queryWrapper.le("expireTime", LocalDateTime.now());
         Page<TeamInfo> resultPage = this.page(page, queryWrapper);
         // 如果查找的数据为空，返回空
         if (resultPage.getRecords().isEmpty())

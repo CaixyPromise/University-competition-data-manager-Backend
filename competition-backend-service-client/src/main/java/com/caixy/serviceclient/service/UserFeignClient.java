@@ -32,6 +32,11 @@ import java.util.Map;
             path = "/api/user/inner")
 public interface UserFeignClient
 {
+
+
+    @PostMapping("/update/departemtCache")
+    void getDepartmentInfoByIdsAndUpdateCache();
+
     /**
      * 判断列表内的用户id是否合法且存在
      *
@@ -158,4 +163,10 @@ public interface UserFeignClient
 
     @GetMapping("/get/wallet")
     UserWallet getUserWallet(@RequestParam("userId") Long userId);
+
+    @PostMapping("/get/both/wallet")
+    Map<Long, UserWallet> getBothUserWallet(@RequestBody List<Long> userIds);
+
+    @PostMapping("update/wallet")
+    Boolean updateUserWallet(@RequestBody UserWallet userWallet);
 }

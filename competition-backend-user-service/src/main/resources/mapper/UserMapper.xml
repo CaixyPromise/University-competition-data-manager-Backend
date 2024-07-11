@@ -100,12 +100,15 @@
                u.userAvatar AS userAvatar,
                u.userSex AS userSex,
                u.userTags AS userTags,
-               u.userProfile AS userProfile
+               u.userProfile AS userProfile,
+               w.balance AS balance
         FROM user u
+                 INNER JOIN user_wallet w ON u.id = w.userId
                  LEFT JOIN department_info d ON u.userDepartment = d.id
                  LEFT JOIN major_info m ON u.userMajor = m.id
         WHERE u.isDelete = 0
           AND u.id = #{userId}
     </select>
+
 
 </mapper>

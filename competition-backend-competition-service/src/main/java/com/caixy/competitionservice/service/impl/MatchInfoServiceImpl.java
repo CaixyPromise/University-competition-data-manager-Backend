@@ -235,6 +235,30 @@ public class MatchInfoServiceImpl extends ServiceImpl<MatchInfoMapper, MatchInfo
                         RedisConstant.ACADEMY_MAJOR,
                         entry.getKey(),
                         String.class, String.class);
+                // 没有命中缓存数据则从数据库里查出
+                if (departmentInfo.isEmpty())
+                {
+                    userService.getDepartmentInfoByIdsAndUpdateCache();
+                    log.error("redis缓存中没有命中学院专业信息，学院id:{}", entry.getKey());
+                    departmentInfo = redisOperatorService.getHash(
+                            RedisConstant.ACADEMY_MAJOR,
+                            entry.getKey(),
+                            String.class, String.class);
+//                    // 查询数据库
+//                    departmentInfo = this.getDepartmentInfo(entry.getKey());
+//                    if (departmentInfo != null)
+//                    {
+//                        redisOperatorService.setHashMap(RedisConstant.ACADEMY_MAJOR,
+//                                entry.getKey(),
+//                                departmentInfo,
+//                                RedisConstant.ACADEMY_MAJOR_EXPIRE);
+//                    }
+//                    else
+//                    {
+//                        continue;
+//                    }
+
+                }
                 HashMap<String, String> majorsMap = new HashMap<>();
                 log.info("departmentInfo: {}", departmentInfo);
                 // 循环majors

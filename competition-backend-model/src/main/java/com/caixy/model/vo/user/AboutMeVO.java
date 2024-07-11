@@ -36,6 +36,12 @@ public class AboutMeVO extends UserWorkVO
      * 用户个人介绍
      */
     private String userProfile;
+
+    /**
+     * 用户余额
+     */
+    private Long balance;
+
     /**
      * 用户标签
      */

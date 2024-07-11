@@ -164,11 +164,11 @@ public class UserController
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户身份不合法");
         }
         user.setUserRole(userRoleCode.getValue());
-        // 1. 管理员添加用户信息时，使用默认默认密码 123 + account
-        String defaultPassword = "123" + userAddRequest.getUserAccount();
+        // 1. 管理员添加用户信息时，使用默认默认密码 as123 + account
+        String defaultPassword = "as123" + userAddRequest.getUserAccount() + "..";
         user.setUserPassword(defaultPassword);
         // 2. 校验用户信息合法性
-        userService.validateUserInfo(user);
+//        userService.validateUserInfo(user);
         // 3. 创建
         Long resultId = userService.makeRegister(user);
         return ResultUtils.success(resultId);
@@ -383,5 +383,14 @@ public class UserController
     {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(userService.getAboutMe(loginUser.getId()));
+    }
+
+    @GetMapping("add/wallet")
+    public BaseResponse<Boolean> updateWallet(@RequestParam("add") Long addMoney, HttpServletRequest request)
+    {
+        User loginUser = userService.getLoginUser(request);
+        Boolean updateWallet = userService.updateWallet(addMoney, loginUser.getId());
+
+        return ResultUtils.success(updateWallet);
     }
 }

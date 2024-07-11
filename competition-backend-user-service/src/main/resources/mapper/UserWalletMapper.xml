@@ -5,7 +5,7 @@
 <mapper namespace="com.caixy.userservice.mapper.UserWalletMapper">
 
     <resultMap id="BaseResultMap" type="com.caixy.model.entity.UserWallet">
-            <id property="id" column="id" jdbcType="INTEGER"/>
+            <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="balance" column="balance" jdbcType="DECIMAL"/>
             <result property="frozenBalance" column="frozenBalance" jdbcType="DECIMAL"/>

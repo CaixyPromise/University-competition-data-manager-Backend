@@ -17,6 +17,7 @@ import com.caixy.marketservice.service.DemandsService;
 import com.caixy.model.dto.market.DemandQueryRequest;
 import com.caixy.model.entity.DemandTakes;
 import com.caixy.model.entity.Demands;
+import com.caixy.model.entity.UserWallet;
 import com.caixy.model.enums.market.DemandStatus;
 import com.caixy.model.enums.market.TaskStatusEnum;
 import com.caixy.model.vo.market.DemandVO;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,7 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
 
     @Resource
     private RedisOperatorService redisOperatorService;
-    ;
+
 
     @Override
     public void validPost(Demands post)
@@ -272,9 +274,10 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新需求状态失败");
             }
 
-            DemandTakes demandTake = demandTakesService.getOne(new QueryWrapper<DemandTakes>().eq("demandId", demandId).eq(
-                    "status",
-                    TaskStatusEnum.PENDING.getCode()));
+            DemandTakes demandTake =
+                    demandTakesService.getOne(new QueryWrapper<DemandTakes>().eq("demandId", demandId).eq(
+                            "status",
+                            TaskStatusEnum.PENDING.getCode()));
             if (demandTake != null)
             {
                 demandTake.setStatus(TaskStatusEnum.ACCEPTED.getCode());
@@ -305,6 +308,11 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
     @Transactional(rollbackFor = Exception.class)
     public boolean completeDemand(Long demandId, Long userId)
     {
+        Demands currentDemands = this.getById(demandId);
+        if (currentDemands == null)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "需求订单不存在");
+        }
         DemandTakes demandTake = demandTakesService.getOne(new QueryWrapper<DemandTakes>().eq("demandId", demandId).eq(
                 "userId",
                 userId));
@@ -319,6 +327,32 @@ public class DemandsServiceImpl extends ServiceImpl<DemandsMapper, Demands>
         {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "无法更新完成需求的请求");
         }
+        List<Long> userIds = new ArrayList<>();
+        userIds.add(demandTake.getUserId());
+        userIds.add(currentDemands.getCreatorId());
+        Map<Long, UserWallet> bothUserWallet = userFeignClient.getBothUserWallet(userIds);
+        UserWallet takerWallet = bothUserWallet.get(demandTake.getUserId());
+        UserWallet creatorWallet = bothUserWallet.get(currentDemands.getCreatorId());
+        if (takerWallet == null || creatorWallet == null)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户钱包不存在");
+        }
+        // 需求的费用
+        BigDecimal demandPrice = currentDemands.getReward();
+
+        // 检查发单人的冻结余额是否足够
+        if (creatorWallet.getFrozenBalance().compareTo(demandPrice) < 0)
+        {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "发单人冻结余额不足");
+        }
+
+        // 更新发单人的钱包：扣减冻结余额
+        creatorWallet.setFrozenBalance(creatorWallet.getFrozenBalance().subtract(demandPrice));
+
+        // 更新接单人的钱包：增加余额
+        takerWallet.setBalance(takerWallet.getBalance().add(demandPrice));
+        userFeignClient.updateUserWallet(creatorWallet);
+        userFeignClient.updateUserWallet(takerWallet);
 
         Demands demand = this.getById(demandId);
         demand.setStatus(DemandStatus.CLOSED.getCode());

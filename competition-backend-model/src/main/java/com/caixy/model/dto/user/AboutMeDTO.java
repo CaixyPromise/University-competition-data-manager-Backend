@@ -36,5 +36,10 @@ public class AboutMeDTO extends UserWorkVO
      */
     private String userTags;
 
+    /**
+     * 用户余额
+     */
+    private Long balance;
+
     private static final long serialVersionUID = 1L;
 }

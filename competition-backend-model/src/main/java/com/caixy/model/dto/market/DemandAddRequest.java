@@ -36,6 +36,11 @@ public class DemandAddRequest implements Serializable
      */
     private Date deadline;
 
+    /**
+     * 用户密码
+     */
+    private String userPassword;
+
     private static final long serialVersionUID = 1L;
 
 }
